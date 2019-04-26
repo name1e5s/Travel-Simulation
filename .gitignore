@@ -45,3 +45,13 @@ CMakeLists.txt.user*
 # Clion
 .idea/
 cmake*
+
+# Latex
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.pdf
+*.gz
+*.toc

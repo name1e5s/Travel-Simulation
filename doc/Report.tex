@@ -1,0 +1,90 @@
+\documentclass[blue]{elegantbook}
+\title{模拟旅行查询系统}
+\subtitle{课程实践报告}
+\author{王嘉茜·于海鑫·田静悦}
+\institute{北京邮电大学计算机学院}
+\date{\today}
+
+\version{1.00}
+\logo{logo.png}
+\cover{cover.jpg}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\mainmatter
+\hypersetup{pageanchor=true}
+
+\chapter{概述}
+\section{任务描述}
+任务要求建立一个旅客管理系统，该系统中内置了一张城市图表，旅客可以通过三种交通工具（汽车、火车、飞机）在各个城市间进行转移。用户（乘客）可以在任意时间对系统提出请求，系统应根据用户的输入为其确定一条旅游线路并输出。系统能模拟出旅客在旅行时某一时间内所处的地点和状态，并以日志的形式记录下来。用户输入应包括起点、终点、必经城市以及旅行策略。旅行策略共有如下三种：
+\begin{enumerate}
+	\item 花费最少策略
+	\item 时间最少策略
+	\item 限时花费最少策略
+\end{enumerate}
+\section{功能需求}
+\begin{itemize}
+	\item 城市总数不少于10个
+	\item 建立汽车、火车和飞机的时刻表（航班表）
+	\begin{enumerate}
+		\item 有沿途到站及票价信息
+		\item 不能太简单（不能总只是1班车次相连）
+	\end{enumerate}
+	\item 旅客的要求包括：起点、终点、途经某些城市和旅行策略
+	
+	旅行策略有：
+	\begin{enumerate}
+		\item 最少费用策略：无时间限制，费用最少即可
+		\item 最少时间策略：无费用限制，时间最少即可
+		\item 限时最少费用策略：在规定的时间内所需费用最省
+	\end{enumerate}
+	\item 旅行模拟查询系统以时间为轴向前推移，每10秒左右向前推进1个小时(非查询状态       的请求不计时)；
+	\item 不考虑城市内换乘交通工具所需时间
+	\item 系统时间精确到小时
+	\item 建立日志文件，对旅客状态变化和键入等信息进行记录
+	\item 用图形绘制地图，并在地图上反映出旅客的旅行过程
+\end{itemize}
+
+\section{模型简化}
+通过一些假设，我们可以剔除实际模型中不必要的变量，保留问题的本质和研究重点，简化模型。在这次课程实践中，我们提出了如下假设：
+\begin{enumerate}
+	\item 截至 2017 年，我国共有约 2000 个火车站办理客运业务，同时有约 220 个民用机场，汽车站更是不计其数。将这些场地全部添加到我们的系统内是不现实的，为了简化获取数据的难度，同时使最后的图形化界面更加简洁，我们只选取了除去港澳台外的全国 31 个行政区的省会城市进行建模。
+	\item 可以注意到，对于火车来说，分段购票与直接购票的价格差较小(通常不超过票价的 10\%)，因此我们可以假设只有相邻省份之间的城市拥有直达列车，并以沿途火车票价之和模拟不相邻省份之间的列车价格。
+	\item 汽车不适用于远程交通，且其运输市场受路况等客观因素影响较大，难以精确求出其运行时间。我们假设只有相邻省份之间的城市可以通过汽车到达，且汽车的时间表是固定的。
+\end{enumerate}
+
+\section{解决方案说明}
+在这一节内，我们对该系统使用的技术以及人员分工进行描述。
+\subsection{编程语言}
+该系统主体部分使用 C++ 进行开发，图形部分采用 Qt 框架以实现跨平台特性。爬虫部分使用 Python 的 requests 库进行开发。
+\subsection{人员分工}
+\begin{itemize}
+	\item \textbf{于海鑫}\ 算法实现以及爬虫部分
+	\item \textbf{王嘉茜}\ 图形界面
+	\item \textbf{田静悦}\ 日志模块
+\end{itemize}
+\subsection{编程规范}
+\begin{itemize}
+	\item \textbf{C++}部分遵循 \href{http://www.nscscc.org/uploads/soft/170318/1-1F31P20H9.docxhttp://google.github.io/styleguide/cppguide}{Google C++ Style Guide}, 通过使用 clang 提供的工具包保证代码风格的一致性
+	\item \textbf{Python}部分遵循 \href{https://www.python.org/dev/peps/pep-0008/}{PEP-8}，使用 IDE 提供的检测功能保证代码风格的规范性
+\end{itemize}
+\vspace*{3 ex}
+以下将分章介绍实现细节。
+
+\chapter{总体设计}
+
+\chapter{算法实现}
+
+\chapter{爬虫部分}
+该系统的爬虫部分主要采用 Python 的 requests 库实现，辅以代理池等技术保证不被网站的反爬虫技术限制。最终在 12306 上爬取到车票信息 14655 条，在携程网上爬取机票信息 930 条。
+
+\chapter{图形界面}
+
+\chapter{日志模块}
+
+\chapter{测试与分析}
+
+\chapter{总结}
+
+\end{document}
