@@ -98,12 +98,17 @@ private:
     void init(const char* path = "/home/name1e5s/travel.dat");
     void add_edge(string, transport_t, int, int, int, int, int);
     int find_city(const string&);
-    int compute_time(const vector<Transport> &, int);
-    int get_cheapest_price(const vector<int>&,const Traveller&) const;
-    int get_fastest_price(const vector <int> &, const Traveller &t, int) const;
+
+    int compute_time(const vector<int> &, const Traveller &t, int) const;
+
+    int compute_price(const vector<int> &, const Traveller &) const;
     int pick_tran(int ,const Transport *) const;
     void floyd();
     void spfa();
+
+    vector<int> simulated_annealing(const double, const Traveller &);
+
+    vector<int> simulated_annealing(const double, const int, const Traveller &);
 
     City city[MAX_VERT];
     int city_num;
