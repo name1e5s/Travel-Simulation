@@ -3,6 +3,9 @@
 
 using std::deque;
 using std::shuffle;
+#define HIGHTEMP 11451400
+#define MIDTEMP 7
+#define LOWTEMP (1.00001)
 
 CityGraph::CityGraph() {
   this->init();
@@ -134,6 +137,13 @@ void CityGraph::init(const char *path) {
   }
 }
 
+int CityGraph::compute_time(const vector<Transport> &plan, int begin_time) {
+  int t = begin_time;
+  for (const auto &i : plan)
+    t = pick_tran(t, &i);
+  return t - begin_time;
+}
+
 // Returns fastest time of the given middle city sequence.
 int CityGraph::compute_time(const vector<int> &city_seq, const Traveller &t,
                             const int begin_time) const {
@@ -159,14 +169,14 @@ int CityGraph::compute_time(const vector<int> &city_seq, const Traveller &t,
 // Returns cheapest price of the given middle city sequence.
 int CityGraph::compute_price(const vector<int> &city_seq,
                              const Traveller &t) const {
-    if (t.middle_city_index.empty()) {
-        return cheapest_price[t.source_city_index][t.dest_city_index];
-    } else {
-        int total_price = 0;
-        for (int i = 0; i < city_seq.size() - 1; i++) {
-            total_price += cheapest_price[city_seq[i]][city_seq[i + 1]];
-        }
+  if (t.middle_city_index.empty()) {
+    return cheapest_price[t.source_city_index][t.dest_city_index];
+  } else {
+    int total_price = 0;
+    for (int i = 0; i < city_seq.size() - 1; i++) {
+      total_price += cheapest_price[city_seq[i]][city_seq[i + 1]];
     }
+  }
 }
 
 // Returns end time when we pick the Transport EDGE at
@@ -178,6 +188,89 @@ int CityGraph::pick_tran(int begin_time, const Transport *edge) const {
     return begin_time + (edge->start_time - begin_time % 24) + edge->duration +
            24;
   }
+}
+
+vector<Transport> CityGraph::get_cheapest_route(Traveller &t,
+                                                const vector<int> &sa_result) {
+  vector<Transport> result;
+  int i;
+
+  if (t.middle_city_index.size() == 0)
+    result.assign(
+        cheapest_route[t.source_city_index][t.dest_city_index].begin(),
+        cheapest_route[t.source_city_index][t.dest_city_index].end());
+
+  else {
+    result.insert(result.begin(),
+                  cheapest_route[t.source_city_index][sa_result[0]].begin(),
+                  cheapest_route[t.source_city_index][sa_result[0]].end());
+
+    for (i = 0; i < sa_result.size() - 1; i++)
+      result.insert(result.end(),
+                    cheapest_route[sa_result[i]][sa_result[i + 1]].begin(),
+                    cheapest_route[sa_result[i]][sa_result[i + 1]].end());
+
+    result.insert(result.end(),
+                  cheapest_route[sa_result[i]][t.dest_city_index].begin(),
+                  cheapest_route[sa_result[i]][t.dest_city_index].end());
+  }
+
+  return result;
+}
+
+vector<Transport> CityGraph::get_cheapest_route(Traveller &t) {
+  return get_cheapest_route(t, simulated_annealing(HIGHTEMP, t));
+}
+
+vector<Transport> CityGraph::get_fastest_route(Traveller &t,
+                                               const vector<int> &sa_result,
+                                               int leave_time) {
+  vector<Transport> result;
+  int temp = leave_time, i;
+
+  if (sa_result.empty()) {
+    result.assign(
+        fastest_route[t.source_city_index][t.dest_city_index][leave_time]
+            .begin(),
+        fastest_route[t.source_city_index][t.dest_city_index][leave_time]
+            .end());
+  }
+
+  else {
+    result.insert(
+        result.begin(),
+        fastest_route[t.source_city_index][sa_result[0]][temp].begin(),
+        fastest_route[t.source_city_index][sa_result[0]][temp].end());
+    temp = fastest_time[t.source_city_index][sa_result[0]][temp] % 24;
+
+    for (i = 0; i < sa_result.size() - 1; i++) {
+      result.insert(result.end(),
+                    fastest_route[sa_result[i]][sa_result[i + 1]][temp].begin(),
+                    fastest_route[sa_result[i]][sa_result[i + 1]][temp].end());
+      temp = fastest_time[sa_result[i]][sa_result[i + 1]][temp] % 24;
+    }
+
+    result.insert(result.end(),
+                  fastest_route[sa_result[i]][t.dest_city_index][temp].begin(),
+                  fastest_route[sa_result[i]][t.dest_city_index][temp].end());
+  }
+
+  return result;
+}
+
+vector<Transport> CityGraph::get_fastest_route(Traveller &t) {
+  vector<Transport> result;
+  int best_time = 0x3f3f3f3f;
+  for (int i = 0; i < 24; i++) {
+    auto tmp_sa = simulated_annealing(HIGHTEMP, i, t);
+    auto tmp = get_fastest_route(t, tmp_sa, i);
+    auto tmp_time = compute_time(tmp_sa, t, i);
+    if (tmp_time < best_time) {
+      result = tmp;
+      best_time = tmp_time;
+    }
+  }
+  return result;
 }
 
 //////////////////////////////////////////////////////////////////
@@ -246,99 +339,162 @@ void CityGraph::spfa() {
 
 static inline double accept_rate(const int &new_energy, const int &old_energy,
                                  const double &temperature) {
-    return old_energy > new_energy ? exp((old_energy - new_energy) / temperature)
-                                   : 1.0f;
+  return old_energy > new_energy ? exp((old_energy - new_energy) / temperature)
+                                 : 1.0f;
 }
 
 vector<int> CityGraph::simulated_annealing(const double initial_temperature,
                                            const Traveller &t) {
-    int new_energy = 0;
-    int old_energy = 0;
-    double temperature = initial_temperature;
-    int min_price;
-    vector<int> temp_plan;
+  int new_energy = 0;
+  int old_energy = 0;
+  double temperature = initial_temperature;
+  int min_price;
+  vector<int> temp_plan;
 
-    for (auto x : t.middle_city_index)
-        temp_plan.push_back(x);
+  for (auto x : t.middle_city_index)
+    temp_plan.push_back(x);
 
-    vector<int> best_plan(temp_plan);
-    std::random_device rd;
-    std::mt19937 g(rd());
-    shuffle(temp_plan.begin(), temp_plan.end(), g);
+  vector<int> best_plan(temp_plan);
+  std::random_device rd;
+  std::mt19937 g(rd());
+  shuffle(temp_plan.begin(), temp_plan.end(), g);
 
-    if (temp_plan.empty())
-        return best_plan;
-    else {
-        min_price = compute_price(temp_plan, t);
-        old_energy = min_price;
-        while (temperature > 1 && temp_plan.size() != 1) {
-            vector<int> new_temp = temp_plan;
+  if (temp_plan.empty())
+    return best_plan;
+  else {
+    min_price = compute_price(temp_plan, t);
+    old_energy = min_price;
+    while (temperature > 1 && temp_plan.size() != 1) {
+      vector<int> new_temp = temp_plan;
 
-            int pos1 = g() % temp_plan.size();
-            int pos2 = g() % temp_plan.size();
-            while (pos1 == pos2)
-                pos2 = g() % temp_plan.size();
+      int pos1 = g() % temp_plan.size();
+      int pos2 = g() % temp_plan.size();
+      while (pos1 == pos2)
+        pos2 = g() % temp_plan.size();
 
-            std::swap(new_temp[pos1], new_temp[pos2]);
-            new_energy = compute_price(temp_plan, t);
-            if (accept_rate(new_energy, old_energy, temperature) >
-                (double) g() / g.max()) {
-                temp_plan.assign(new_temp.begin(), new_temp.end());
-                old_energy = new_energy;
-            }
+      std::swap(new_temp[pos1], new_temp[pos2]);
+      new_energy = compute_price(temp_plan, t);
+      if (accept_rate(new_energy, old_energy, temperature) >
+          (double)g() / g.max()) {
+        temp_plan.assign(new_temp.begin(), new_temp.end());
+        old_energy = new_energy;
+      }
 
-            if (old_energy < min_price) {
-                min_price = old_energy;
-                best_plan.assign(temp_plan.begin(), temp_plan.end());
-            }
-            temperature *= 1 - 0.004114514;
-        }
+      if (old_energy < min_price) {
+        min_price = old_energy;
+        best_plan.assign(temp_plan.begin(), temp_plan.end());
+      }
+      temperature *= 1 - 0.004114514;
     }
+  }
 }
 
 vector<int> CityGraph::simulated_annealing(const double initial_temperature,
                                            const int leave_time,
                                            const Traveller &t) {
-    int new_energy = 0;
-    int old_energy = 0;
-    double temperature = initial_temperature;
-    int min_price;
-    vector<int> temp_plan;
+  int new_energy = 0;
+  int old_energy = 0;
+  double temperature = initial_temperature;
+  int min_price;
+  vector<int> temp_plan;
 
-    for (auto x : t.middle_city_index)
-        temp_plan.push_back(x);
+  for (auto x : t.middle_city_index)
+    temp_plan.push_back(x);
 
-    vector<int> best_plan(temp_plan);
-    std::random_device rd;
-    std::mt19937 g(rd());
-    shuffle(temp_plan.begin(), temp_plan.end(), g);
+  vector<int> best_plan(temp_plan);
+  std::random_device rd;
+  std::mt19937 g(rd());
+  shuffle(temp_plan.begin(), temp_plan.end(), g);
 
-    if (temp_plan.empty())
-        return best_plan;
-    else {
-        min_price = compute_time(temp_plan, t, leave_time);
-        old_energy = min_price;
-        while (temperature > 1 && temp_plan.size() != 1) {
-            vector<int> new_temp = temp_plan;
+  if (temp_plan.empty())
+    return best_plan;
+  else {
+    min_price = compute_time(temp_plan, t, leave_time);
+    old_energy = min_price;
+    while (temperature > 1 && temp_plan.size() != 1) {
+      vector<int> new_temp = temp_plan;
 
-            int pos1 = g() % temp_plan.size();
-            int pos2 = g() % temp_plan.size();
-            while (pos1 == pos2)
-                pos2 = g() % temp_plan.size();
+      int pos1 = g() % temp_plan.size();
+      int pos2 = g() % temp_plan.size();
+      while (pos1 == pos2)
+        pos2 = g() % temp_plan.size();
 
-            std::swap(new_temp[pos1], new_temp[pos2]);
-            new_energy = compute_time(temp_plan, t, leave_time);
-            if (accept_rate(new_energy, old_energy, temperature) >
-                (double) g() / g.max()) {
-                temp_plan.assign(new_temp.begin(), new_temp.end());
-                old_energy = new_energy;
-            }
+      std::swap(new_temp[pos1], new_temp[pos2]);
+      new_energy = compute_time(temp_plan, t, leave_time);
+      if (accept_rate(new_energy, old_energy, temperature) >
+          (double)g() / g.max()) {
+        temp_plan.assign(new_temp.begin(), new_temp.end());
+        old_energy = new_energy;
+      }
 
-            if (old_energy < min_price) {
-                min_price = old_energy;
-                best_plan.assign(temp_plan.begin(), temp_plan.end());
-            }
-            temperature *= 1 - 0.004114514;
-        }
+      if (old_energy < min_price) {
+        min_price = old_energy;
+        best_plan.assign(temp_plan.begin(), temp_plan.end());
+      }
+      temperature *= 1 - 0.004114514;
     }
+  }
+}
+
+void CityGraph::dfs(Traveller &t, int money, int begin_time, int time) {
+  if ((t.current_city_index == t.dest_city_index) &&
+      (t.middle_city_index.empty())) {
+    if ((min_cost > money) && (time <= t.time_limit)) {
+      min_cost = money;
+      best_route = curr_route;
+      return;
+    } else
+      return;
+  }
+
+  if (time > t.time_limit || money > min_cost)
+    return;
+
+  int now = t.current_city_index;
+  Transport *temp = city[t.current_city_index].first_transport;
+
+  while (temp != nullptr) {
+    t.current_city_index = temp->dest_city;
+    curr_route.push_back(*temp);
+
+    int city_idx = t.get_middle_index(t.current_city_index);
+    if (city_idx >= 0) {
+      t.middle_city_index.erase(t.middle_city_index.begin() + city_idx);
+      dfs(t, money + temp->price, begin_time,
+          pick_tran(time + begin_time, temp) - begin_time);
+      t.current_city_index = now;
+      t.middle_city_index.insert(t.middle_city_index.begin() + city_idx,
+                                 temp->dest_city);
+    } else
+      dfs(t, money + temp->price, begin_time,
+          pick_tran(time + begin_time, temp) - begin_time);
+
+    t.current_city_index = now;
+    curr_route.pop_back();
+    temp = temp->next_transport;
+  }
+}
+
+void CityGraph::get_route(Traveller &t) {
+  if (t.plan_type == TYPE_CHEAP)
+    t.plan_result = get_cheapest_route(t);
+  else if (t.plan_type == TYPE_FAST)
+    t.plan_result = get_fastest_route(t);
+  else {
+    best_route.clear();
+    auto temp = get_cheapest_route(t);
+    if (compute_time(temp, t.leave_time) < t.time_limit)
+      t.plan_result = temp;
+    else {
+      auto sa = simulated_annealing(MIDTEMP, t);
+      if (compute_time(sa, t, t.leave_time) - t.leave_time <= t.time_limit) {
+        best_route = get_fastest_route(t, sa, t.leave_time);
+        min_cost = 0;
+        for (auto &i : best_route)
+          min_cost += i.price;
+        dfs(t, 0, t.leave_time, 0);
+      }
+      t.plan_result = best_route;
+    }
+  }
 }
