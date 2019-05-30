@@ -1,6 +1,7 @@
-\documentclass[blue]{elegantbook}
+\documentclass[lang=cn,blue]{elegantbook}
 \title{模拟旅行查询系统}
 \subtitle{课程实践报告}
+
 \author{王嘉茜·于海鑫·田静悦}
 \institute{北京邮电大学计算机学院}
 \date{\today}
@@ -8,6 +9,26 @@
 \version{1.00}
 \logo{logo.png}
 \cover{cover.jpg}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\newfontfamily\courier{Courier New}
+\lstset{linewidth=1.1\textwidth,
+	numbers=left,
+	basicstyle=\small\courier,
+	numberstyle=\tiny\courier,
+	keywordstyle=\color{blue}\courier,
+	commentstyle=\it\color[cmyk]{1,0,1,0}\courier, 
+	stringstyle=\it\color[RGB]{128,0,0}\courier,
+	frame=single,
+	breaklines,
+	extendedchars=false, 
+	xleftmargin=2em,xrightmargin=2em, aboveskip=1em,
+	tabsize=4, 
+	showspaces=false
+	basicstyle=\small\courier
+}
 
 \begin{document}
 \maketitle
@@ -76,9 +97,154 @@
 
 \chapter{算法实现}
 
-\chapter{爬虫部分}
-该系统的爬虫部分主要采用 Python 的 requests 库实现，辅以代理池等技术保证不被网站的反爬虫技术限制。最终在 12306 上爬取到车票信息 14655 条，在携程网上爬取机票信息 930 条。
+\section{价格最低策略}
 
+在我们的假设内，当不存在必须经过的中间城市时，该问题简化为单源最短路径问题，该问题最常见的解法为 \textbf{Dijkstra} 算法，其复杂度为 $O(|V|^2)$。我们在此处选择的算法为 \textbf{Floyd} 算法，其伪代码见算法~\ref{floyd}~，以此将全部点对之间的价格最低路径以及价格预先计算出来，并等待查询，该算法的时间复杂度为 $O(|V|^3)$。
+
+\begin{algorithm}[H]
+	\caption{\label{floyd}The Floyd Algorithm}
+	\begin{algorithmic}[1]
+		\Procedure{Floyd}{} 
+		\State Let $dist$ be a $|V| \times |V|$ matrix of minimum distances initialized to $\infty$
+		\For{\textbf{each} vertex $v$}
+		\State $dist[v][v]\gets 0$
+		\EndFor
+		\For{\textbf{each} edge $(u,v)$}
+		\State $dist[u][v]\gets w(u,v)$ \Comment the weight of the edge $(u,v)$
+		\EndFor
+		\For{$k$ \textbf{from} 1 \textbf{to} $|V|$}
+		\For{$i$ \textbf{from} 1 \textbf{to} $|V|$}
+		\For{$j$ \textbf{from} 1 \textbf{to} $|V|$}
+		\If{$dist[i][j] > dist[i][k] + dist[k][j]$}
+		\State $dist[i][j] \gets dist[i][k] + dist[k][j]$
+		\Comment also update our route here
+		\EndIf
+		\EndFor
+		\EndFor
+		\EndFor
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+当存在中间城市时，我们可以把``源城市-中间城市、中间城市-目标城市''的最短路径作为``源城市-中间城市-目标城市''的最短路径。此时中间城市的排序就成为了关键问题，该问题与旅行商问题比较类似。我们使用广为人知的模拟退火算法来处理此问题，模拟退火算法的一般流程见算法~\ref{sa}~。对于该问题，\textbf{ENERGY} 函数就是随机生成的路径序列可以达到的最低价格，而我们使用的\textbf{ACCEPT}函数的定义如下：
+\begin{lstlisting}[language=C++]
+static inline double accept_rate(const int &new_energy, const int &old_energy, const double &temperature) {
+	return old_energy > new_energy ? exp((old_energy - new_energy) / temperature) : 1.0f;
+}
+\end{lstlisting}
+后续的时间最短策略使用的算法也是模拟退火算法，唯一修改的只有\textbf{ENERGY}，恕不再进行详细说明。
+
+\begin{algorithm}[H]
+	\caption{\label{sa}The Simulated Annealing Algorithm}
+\begin{algorithmic}[1]
+	\Procedure{SimulatedAnnealing}{}
+	\State $T\gets T_{max}$
+	\State $best\gets$ \textbf{\Call{INIT}{$ $}}
+	
+	\While{$T>T_{min}$}
+	\State $next\gets $ \textbf{\Call{NEIGHBOUR}{$T, best$}}
+	\State $\Delta E\gets$ \textbf{\Call{ENERGY}{$next$}} $-$ \textbf{\Call{ENERGY}{$best$}}
+	\If{$\Delta E < 0$}
+	\State $best\gets next$
+	\ElsIf{\Call{random}{$ $} $<$ \textbf{\Call{ACCEPT}{$T,\Delta E$}}}
+	\State $best\gets next$
+	\EndIf
+	\State $T\gets$ \textbf{\Call{COOLING}{$T,best$}}
+	\EndWhile \\
+	\Return $best$
+	\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\chapter{爬虫部分}
+该系统的爬虫部分主要采用 Python 的 requests 库实现，辅以代理池等技术保证不被网站的反爬虫技术限制。最终在 12306 上爬取到车票信息 14655 条，在携程网上爬取机票信息 930 条。该部分的源码现已开源，网址为 \href{https://github.com/kuso-kodo/kuso\_12306}{https://github.com/kuso-kodo/kuso\_12306}。
+
+\section{火车票信息}
+火车票的全部信息来自于铁总的 \href{https://www.12306.cn}{12306}。该部分代码位于 \href{https://github.com/kuso-kodo/kuso_12306/blob/master/src_12306/fetch.py}{fetch.py}。
+
+12306 查询火车票的网址结构如下：
+\begin{center}
+	\begin{tabular}{cc}
+		\hline
+		\makebox[0.5\textwidth][c]{参数}	&  \makebox[0.2\textwidth][c]{含义} \\ \hline
+		https://kyfw.12306.cn/otn/leftTicket/query & 查询网址 \\
+		leftTicketDTO.train\_date & 要查询的日期 \\
+		leftTicketDTO.from\_station & 始发站 \\
+		leftTicketDTO.to\_station & 终点站 \\
+		purpose\_codes & 乘客类型 \\ \hline
+	\end{tabular}
+\end{center}
+需要注意的是站点需要使用内部电码来表示，获取内部电码的方式是访问 \href{https://kyfw.12306.cn/otn/resources/js/framework/station\_name.js}{https://kyfw.12306.cn/otn/resources/js/framework/station\_name.js} 获取形如``@bjb|北京北|VAP|beijingbei|bjb|0''的信息之后通过正则表达式获取所需信息。
+访问该 API 返回的结果为 JSON，结果内包含了查询日期内全部车次的信息。使用恰当的方式提取即可。返回结果示例如下：
+\begin{lstlisting}[language={}]
+{"data":{"flag":"1","map":{"BJP":"北京","SHH":"上海"},"result":["X2r16oP8IGH94iXTfaiBVftWDflhurjVyMtLApUAqGtb%UMWvDzNbAPvs2JJgtpCsG2y5VUJ2l5mC%0AbxIfI7x4izoLOx2%2FQrCgmSw0FTE0HJRw34xqltxHR6QvsJs8ZzcVyUtiZ6O57m%2Btt%2BS7QUfVl23M%0AYkqXZBJdFwX3qw33jZUkU0PLe%2FYfzcinUaZk6VpcbaHLuYoflN4kdE6Vk%2BPrYGpwqehRkGoTElzS%0A8naAdzOg1VyR8vffGyFCZ%2B4F9ZbIMrm0Hm1cVV%2BA2RsOgIps8IwLambwpZ76GgZZRZj0O6%2B0TkGY%0AG8DGrhYOPKg%3D|预订|240000D70500|D705|BJP|SHH|BJP|SHH|21:21|09:20|11:59|Y|R3ArWiqJWSrjfblWAofOiX3%2Bo5Q7Ud8vVMTg1pnCJxohcTRTmikvHJ7nmlo%3D|20190530|3|P4|01|04|0|0||||有|||有||有||有||||O0J0O0I0|OJOI|0|0|null"]},"httpstatus":200,"messages":"","status":true}
+\end{lstlisting}
+
+查询车票价格的 API 如下：
+\begin{center}
+	\begin{tabular}{cc}
+		\hline
+		\makebox[0.5\textwidth][c]{参数}	&  \makebox[0.2\textwidth][c]{含义} \\ \hline
+		https://kyfw.12306.cn/otn/leftTicket/queryTicketPrice & 查询网址 \\
+		train\_no & 火车编号 \\
+		from\_station\_no & 起始站编号 \\
+		to\_station\_no & 结束站 \\
+		seat\_types & 火车类型 \\
+		train\_date & 出行时间 \\ \hline
+	\end{tabular}
+\end{center}
+需要注意的是，在访问该网站查询价格之前，需要以相同的参数访问 \href{	https://kyfw.12306.cn/otn/leftTicket/queryTicketPriceFL}{	https://kyfw.12306.cn/otn/leftTicket/queryTicketPriceFL} 一次才可以获得正确的结果，否则只能收到出错的信息。这里的大部分参数都可以在上一个 API 的回应中找到。该 API 的返回结果也是 JSON，示例如下：
+\begin{lstlisting}[language={}]
+{"data":{"9":"17480","A9":"¥1748.0","M":"¥933.0","O":"¥553.0","OT":[],"WZ":"¥553.0","train_no":"240000G1010K"},"httpstatus":200,"messages":"","status":true}
+\end{lstlisting}
+使用恰当的方式从中提取价格即可。
+
+通过使用 Python 对以上过程编程，最终获取到了 31 个目标城市之间的直达列车信息共 14655 条。城市列表如下：
+\begin{lstlisting}[language=Python]
+	city_list = ['北京', '天津', '上海', '重庆', '石家庄',
+	'太原', '呼和浩特', '郑州', '长沙', '武汉',
+	'哈尔滨', '长春', '沈阳', '成都', '昆明',
+	'贵阳', '拉萨', '乌鲁木齐', '西安', '兰州',
+	'银川', '西宁', '广州', '南宁', '海口',
+	'南京', '杭州', '福州', '济南', '南昌',
+	'合肥']
+\end{lstlisting}
+
+\section{机票信息}
+机票的信息来自于\href{https://www.ctrip.com/}{携程网}。该网站的爬取较为简单，故不再说明，只是在此记录下核心代码：
+\begin{lstlisting}[language=Python]
+def get_flight_prices(site_info, time_info):
+	url = 'https://flights.ctrip.com/itinerary/api/12808/products'
+	headers = {'referer': 'https://flights.ctrip.com/itinerary/oneway',
+	'content-type': 'application/json'}
+	data = {
+	"flightWay": "Oneway",
+	"classType": "ALL",
+	"hasChild": False,
+	"hasBaby": False,
+	"searchIndex": 1,
+	"airportParams": [{
+	"dcity": site_info['depart']['city'],
+	"acity": site_info['arrive']['city'],
+	"dcityname": site_info['depart']['cityname'],
+	"acityname": site_info['arrive']['cityname'],
+	"date": time_info['date'],
+	"dcityid": site_info['depart']['cityid'],
+	"acityid": site_info['arrive']['cityid']
+	}]
+	}
+	res = None
+	while not res:
+		res = get_resp(url, json.dumps(data), headers)
+	if 200 <= res.status_code < 300:
+		return parse(res.text)
+	else:
+		print('CTrip Sucks')
+		return []
+\end{lstlisting}
+
+为了加快爬取速度以及防止被限制，我们在这里使用公开的 IP 代理信息搭建了代理池，最终在十分钟内爬取了 31 个城市间的飞机信息共 930 条。
 \chapter{图形界面}
 
 \chapter{日志模块}
