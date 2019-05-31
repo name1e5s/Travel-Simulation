@@ -59,7 +59,7 @@ void CityGraph::add_edge(string name, transport_t type, int source, int dest,
   // Add edge to the graph
   if (!city[source].first_transport) {
     city[source].first_transport = edge;
-    std::cout << "Added " << edge->tran_name;
+    std::cout << "Added " << edge->tran_name << std::endl;
   } else {
     edge->next_transport = city[source].first_transport;
     city[source].first_transport = edge;
@@ -74,7 +74,8 @@ void CityGraph::print_edge() {
       Transport *t = i.first_transport;
       while (t) {
         std::cout << t->tran_name << " " << t->tran_type << " "
-                  << index_city[t->source_city] << index_city[t->dest_city]
+                  << index_city[t->source_city] << " " <<index_city[t->dest_city] << " "
+                  << t->start_time << " " << t->duration << " " << t->price
                   << std::endl;
         t = t->next_transport;
       }
@@ -97,10 +98,16 @@ void CityGraph::init(const char *path) {
     for (int j = 0; j < MAX_VERT; j++) {
       if (i != j) {
         cheapest_price[i][j] = INFTY;
+        for(int k = 0; k < 24; k++)
+            fastest_time[i][j][k] = INFTY;
       } else {
         cheapest_price[i][j] = 0;
+          for(int k = 0; k < 24; k++)
+              fastest_time[i][j][k] = k;
       }
       cheapest_route[i][j].resize(0); // CLear all
+        for(int k = 0; k < 24; k++)
+            fastest_route[i][j][k].resize(0); // CLear all
     }
     city[i].first_transport = nullptr;
   }
@@ -150,7 +157,7 @@ int CityGraph::compute_time(const vector<int> &city_seq, const Traveller &t,
   int temp, i;
 
   if (t.middle_city_index.empty()) {
-    return begin_time + (fastest_time[t.source_city_index][t.dest_city_index]
+    return (fastest_time[t.source_city_index][t.dest_city_index]
                                      [begin_time % 24] -
                          begin_time % 24);
   } else {
@@ -162,7 +169,7 @@ int CityGraph::compute_time(const vector<int> &city_seq, const Traveller &t,
       temp +=
           fastest_time[city_seq[i]][city_seq[i + 1]][temp % 24] - (temp % 24);
     return temp + (fastest_time[city_seq[i]][t.dest_city_index][temp % 24] -
-                   (temp % 24));
+                   (temp % 24)) - begin_time;
   }
 }
 
@@ -179,6 +186,30 @@ int CityGraph::compute_price(const vector<int> &city_seq,
   }
 }
 
+// Guess a price
+int CityGraph::compute_expected_price(const Traveller &t) {
+    int guess_price_1 = compute_price(simulated_annealing(LOWTEMP, t),t);
+
+    int guess_price_2 = compute_price(t.middle_city_index, t);
+
+    if(guess_price_1 > guess_price_2)
+        std::swap(guess_price_1, guess_price_2);
+
+    return (guess_price_2 * 2) - guess_price_1;
+}
+
+// Guess a time.
+int CityGraph::compute_expected_time(Traveller &t, int begin_time) {
+    auto guess_time_1 = compute_time(t.middle_city_index, t, begin_time);
+    auto tmp_sa = simulated_annealing(LOWTEMP, begin_time, t);
+    auto tmp = get_fastest_route(t, tmp_sa, begin_time);
+    auto guess_time_2 = compute_time(tmp_sa, t, begin_time);
+
+    if(guess_time_1 > guess_time_2)
+        std::swap(guess_time_1, guess_time_2);
+
+    return (guess_time_2 * 2) - guess_time_1;
+}
 // Returns end time when we pick the Transport EDGE at
 // begin_time. End time may be larger than 24. The function should be const.
 int CityGraph::pick_tran(int begin_time, const Transport *edge) const {
@@ -265,6 +296,7 @@ vector<Transport> CityGraph::get_fastest_route(Traveller &t) {
     auto tmp_sa = simulated_annealing(HIGHTEMP, i, t);
     auto tmp = get_fastest_route(t, tmp_sa, i);
     auto tmp_time = compute_time(tmp_sa, t, i);
+      std::cout << "CCCC: " << tmp_time << std::endl;
     if (tmp_time < best_time) {
       result = tmp;
       best_time = tmp_time;
@@ -302,7 +334,7 @@ void CityGraph::spfa() {
   for (int i = 0; i < city_num; ++i)
     for (int time = 0; time < 24; ++time) {
       deque<int> deque;
-      bool used[MAX_VERT] = {false};
+      bool used[MAX_VERT] = {};
 
       deque.push_back(i);
       used[i] = true;
@@ -395,7 +427,7 @@ vector<int> CityGraph::simulated_annealing(const double initial_temperature,
   int new_energy = 0;
   int old_energy = 0;
   double temperature = initial_temperature;
-  int min_price;
+  int min_time;
   vector<int> temp_plan;
 
   for (auto x : t.middle_city_index)
@@ -409,8 +441,8 @@ vector<int> CityGraph::simulated_annealing(const double initial_temperature,
   if (temp_plan.empty())
     return best_plan;
   else {
-    min_price = compute_time(temp_plan, t, leave_time);
-    old_energy = min_price;
+    min_time = compute_time(temp_plan, t, leave_time);
+    old_energy = min_time;
     while (temperature > 1 && temp_plan.size() != 1) {
       vector<int> new_temp = temp_plan;
 
@@ -427,8 +459,8 @@ vector<int> CityGraph::simulated_annealing(const double initial_temperature,
         old_energy = new_energy;
       }
 
-      if (old_energy < min_price) {
-        min_price = old_energy;
+      if (old_energy < min_time) {
+        min_time = old_energy;
         best_plan.assign(temp_plan.begin(), temp_plan.end());
       }
       temperature *= 1 - 0.004114514;
@@ -443,12 +475,14 @@ void CityGraph::dfs(Traveller &t, int money, int begin_time, int time) {
       min_cost = money;
       best_route = curr_route;
       return;
-    } else
+    } else {
       return;
+    }
   }
 
-  if (time > t.time_limit || money > min_cost)
-    return;
+  if (time + compute_expected_time(t, time) > t.time_limit || money + compute_expected_price(t) > min_cost) {
+      return;
+  }
 
   int now = t.current_city_index;
   Transport *temp = city[t.current_city_index].first_transport;
@@ -460,6 +494,7 @@ void CityGraph::dfs(Traveller &t, int money, int begin_time, int time) {
     int city_idx = t.get_middle_index(t.current_city_index);
     if (city_idx >= 0) {
       t.middle_city_index.erase(t.middle_city_index.begin() + city_idx);
+      std::cout << "FFF\n";
       dfs(t, money + temp->price, begin_time,
           pick_tran(time + begin_time, temp) - begin_time);
       t.current_city_index = now;

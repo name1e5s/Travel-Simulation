@@ -100,17 +100,19 @@ public:
   ~CityGraph();
   void print_edge(); // For debug
   void get_route(Traveller &);
+    int compute_price(const vector<int> &, const Traveller &) const;
   map<int, string> index_city;
   map<string, int> city_index;
 
 private:
-  void init(const char *path = "/home/name1e5s/travel.dat");
+  void init(const char *path = "/home/name1e5s/Projects/Travel-Simulation/edges.dat");
   void add_edge(string, transport_t, int, int, int, int, int);
   int find_city(const string &);
 
   int compute_time(const vector<int> &, const Traveller &t, int) const;
   int compute_time(const vector<Transport> &, int);
-  int compute_price(const vector<int> &, const Traveller &) const;
+  int compute_expected_price(const Traveller &t);
+  int compute_expected_time(Traveller &t, int begin_time);
   int pick_tran(int, const Transport *) const;
   void floyd();
   void spfa();
