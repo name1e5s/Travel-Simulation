@@ -13,7 +13,7 @@ using std::string;
 using std::vector;
 
 // Define the type of the trips.
-typedef enum { TYPE_TRAIN, TYPE_FLIGHT, TYPE_BUS } transport_t;
+typedef enum { TYPE_TRAIN, TYPE_FLIGHT } transport_t;
 // Define users' requests type.
 typedef enum { TYPE_CHEAP, TYPE_FAST, TYPE_CHEAP_LIMITED } planning_t;
 
@@ -86,7 +86,7 @@ struct Traveller {
   int time_all, price_all;
   // void run_simulation();
   int get_middle_index(int city_idx) {
-    for (int i = 0; i < middle_city_index.size(); ++i)
+    for (uint i = 0; i < middle_city_index.size(); ++i)
       if (middle_city_index[i] == city_idx)
         return i;
     return -1;
@@ -98,21 +98,20 @@ class CityGraph {
 public:
   CityGraph();
   ~CityGraph();
-  void print_edge(); // For debug
   void get_route(Traveller &);
-    int compute_price(const vector<int> &, const Traveller &) const;
-    int compute_price(const vector<Transport> &);
+  int compute_price(const vector<Transport> &);
+  int compute_time(const vector<Transport> &, int);
   map<int, string> index_city;
   map<string, int> city_index;
 
 private:
-  void init(const char *path = "/home/name1e5s/Projects/Travel-Simulation/edges.dat");
-    void init_cities();
+  void init(
+      const char *path = "/home/name1e5s/Projects/Travel-Simulation/edges.dat");
+  void init_cities();
   void add_edge(string, transport_t, int, int, int, int, int);
   int find_city(const string &);
-
+  int compute_price(const vector<int> &, const Traveller &) const;
   int compute_time(const vector<int> &, const Traveller &t, int) const;
-  int compute_time(const vector<Transport> &, int);
   int compute_expected_price(const Traveller &t);
   int compute_expected_time(Traveller &t, int begin_time);
   int pick_tran(int, const Transport *) const;

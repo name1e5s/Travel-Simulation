@@ -4,6 +4,7 @@ import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.3
 import QtLocation 5.12
 import QtPositioning 5.12
+import com.name1e5s.travel 1.0
 
 Page {
     id: infoPage
@@ -22,7 +23,6 @@ Page {
         ListElement { text: qsTr("ChongQing") }
         ListElement { text: qsTr("ShiJiaZhuang") }
         ListElement { text: qsTr("TaiYuan") }
-        ListElement { text: qsTr("HuHeHaoTe") }
         ListElement { text: qsTr("ZhengZhou") }
         ListElement { text: qsTr("ChangSha") }
         ListElement { text: qsTr("WuHan") }
@@ -32,21 +32,37 @@ Page {
         ListElement { text: qsTr("ChengDu") }
         ListElement { text: qsTr("KunMing") }
         ListElement { text: qsTr("GuiYang") }
-        ListElement { text: qsTr("LaSa") }
-        ListElement { text: qsTr("Urumuqi") }
         ListElement { text: qsTr("Xi'an") }
         ListElement { text: qsTr("LanZhou") }
-        ListElement { text: qsTr("YinChuan") }
-        ListElement { text: qsTr("XiNing") }
         ListElement { text: qsTr("GuangZhou") }
         ListElement { text: qsTr("NanNing") }
-        ListElement { text: qsTr("HaiKou") }
         ListElement { text: qsTr("NanJing") }
         ListElement { text: qsTr("HangZhou") }
         ListElement { text: qsTr("FuZhou") }
         ListElement { text: qsTr("JiNan") }
         ListElement { text: qsTr("NanChang") }
         ListElement { text: qsTr("HeFei") }
+        ListElement { text: qsTr("HuHeHaoTe") }
+        ListElement { text: qsTr("LaSa") }
+        ListElement { text: qsTr("Urumuqi") }
+        ListElement { text: qsTr("YinChuan") }
+        ListElement { text: qsTr("XiNing") }
+        ListElement { text: qsTr("HaiKou") }
+    }
+
+    GraphHandler {
+        id: graphHandler
+    }
+
+    Connections {
+        target: graphHandler
+        onTotalPriceChanged: {
+            totalPriceText.text = "Price: " + graphHandler.totalPrice
+        }
+
+        onTotalTimeChanged: {
+            totalTimeText.text = "Time: " + graphHandler.totalTime
+        }
     }
 
     Plugin {
@@ -80,6 +96,10 @@ Page {
             Layout.preferredWidth: parent.width * 0.2
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
+            Rectangle {
+                height: 50
+            }
+
             RowLayout {
                 Layout.preferredWidth: parent.width * 0.9
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
@@ -96,6 +116,11 @@ Page {
                     id: fromCityComboBox
                     currentIndex: 0
                     model: cityList
+                    onCurrentIndexChanged: {
+                        graphHandler.sourceCity = currentIndex
+                        checkmodel.setProperty(currentIndex ,"value", false)
+                        listView.model
+                    }
                 }
 
                 Text {
@@ -110,6 +135,11 @@ Page {
                     id: toCityComboBox
                     currentIndex: 0
                     model: cityList
+                    onCurrentIndexChanged: {
+                        graphHandler.destCity = currentIndex
+                        checkmodel.setProperty(currentIndex ,"value", false)
+                        listView.update()
+                    }
                 }
 
             }
@@ -154,13 +184,7 @@ Page {
                     }
                 }
                 Keys.onReturnPressed: {
-                    if(isValidDate(dateBox.text)) {
-
-                    } else {
-                        popup.popMessage = "Wrong Data!"
-                        popup.open()
-                        dateBox.clear()
-                    }
+                    handleDateBox()
                 }
             }
 
@@ -171,24 +195,42 @@ Page {
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
             }
 
-            GridLayout {
-                id: wayPointGridLayout
-                columns: 4
-                Layout.preferredWidth: parent.width * 0.9
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-
-                Repeater {
-                    model: 31
-                    Layout.preferredWidth: parent.width
-                    CheckBox {
-                        Layout.row: index / 4
-                        Layout.column: index % 4
-                        Layout.fillWidth: true
-                        text: cityList.get(index).text
-                        checked: false
+            ListModel {
+                id: checkmodel
+                Component.onCompleted: {
+                    for(var i = 0; i < 31; i++){
+                        checkmodel.append({"name": cityList.get(i).text, "value": false})
                     }
                 }
+            }
+
+            Rectangle {
+                height: 10
+            }
+
+            ColumnLayout {
+                ListView {
+                    id: listView
+                    model: checkmodel
+                    width: parent.width
+                    height: 200
+                    delegate: CheckDelegate {
+                        text: name + " ".repeat(20 - name.length) + "\t\t"
+                        checked: value
+                        enabled: !(index === fromCityComboBox.currentIndex || index === toCityComboBox.currentIndex)
+                        onCheckStateChanged: checkmodel.setProperty(index ,"value", checked)
+                    }
+                    flickableDirection: Flickable.VerticalFlick
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    ScrollBar.vertical: ScrollBar {}
+                 }
+            }
+
+            Rectangle {
+                height: 10
             }
 
             RowLayout {
@@ -205,8 +247,39 @@ Page {
                     id: planTypeComboBox
                     Component.onCompleted: width = calcComboBoxImplicitWidth(planTypeComboBox)
                     currentIndex: 0
-                    model: ["Best Timesdsds", "Least Cost", "Best Perf"]
+                    model: ["Least Cost", "Best Time", "Best Perf"]
+                    onCurrentIndexChanged: {
+                        graphHandler.planType = currentIndex
+                    }
                 }
+            }
+
+            RowLayout {
+                Layout.preferredWidth: parent.width * 0.9
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                TextField {
+                    id: hourBox
+                    placeholderText: qsTr("Leave time ...")
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    inputMethodHints: Qt.ImhDigitsOnly
+                    enabled: planTypeComboBox.currentIndex === 2
+                    Keys.onReturnPressed: {
+                        leaveTimeHandler()
+                    }
+                }
+
+                TextField {
+                    id: limitBox
+                    placeholderText: qsTr("Time limit...")
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    inputMethodHints: Qt.ImhDigitsOnly
+                    enabled: planTypeComboBox.currentIndex === 2
+                    Keys.onReturnPressed: {
+                        limitHandler()
+                    }
+                }
+
             }
 
             Rectangle {
@@ -240,6 +313,9 @@ Page {
                     ToolTip.timeout: 5000
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("Do Plan.")
+                    onClicked: {
+                        runPlan()
+                    }
                 }
 
                 Button {
@@ -271,6 +347,31 @@ Page {
                 }
 
             }
+
+            RowLayout {
+                Layout.preferredWidth: parent.width * 0.9
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                Text {
+                    id: totalTimeText
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    width: parent.width * 0.4
+                    font.pointSize: 14
+                    text: qsTr("Time:")
+                }
+
+                Text {
+                    id: totalPriceText
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    width: parent.width * 0.4
+                    font.pointSize: 14
+                    text: qsTr("Price:")
+                }
+            }
+
+            Rectangle {
+                height: 50
+            }
         }
 
     }
@@ -289,6 +390,18 @@ Page {
                     + cb.indicator.width
     }
 
+    function handleDateBox() {
+        if(isValidDate(dateBox.text)) {
+            graphHandler.beginYear = dateBox.text.slice(0,4)
+            graphHandler.beginMonth = dateBox.text.slice(5,7)
+            graphHandler.beginYear = dateBox.text.slice(8,10)
+        } else {
+            popup.popMessage = "Wrong Data!"
+            popup.open()
+            dateBox.clear()
+        }
+    }
+
     function isValidDate(dateString) {
       var regEx = /^\d{4}-\d{2}-\d{2}$/;
       if(!dateString.match(regEx)) return false;  // Invalid format
@@ -298,4 +411,45 @@ Page {
       return d.toISOString().slice(0,10) === dateString;
     }
 
+    function leaveTimeHandler() {
+        var regEx = /^\d+$/;
+        if(!hourBox.text.match(regEx) || parseInt(hourBox.text) > 23 || parseInt(hourBox.text) < 0) {
+            popup.popMessage = "Wrong Leave Time!"
+            popup.open()
+            dateBox.clear()
+        } else {
+            graphHandler.leaveTime = hourBox.text
+        }
+    }
+
+    function limitHandler() {
+        var regEx = /^\d+$/;
+        if(!limitBox.text.match(regEx)) {
+            popup.popMessage = "Wrong Limit!"
+            popup.open()
+            dateBox.clear()
+        } else {
+            graphHandler.timeLimit = limitBox.text
+        }
+    }
+
+    function runPlan() {
+        handleDateBox()
+        if(planTypeComboBox.currentIndex === 2) {
+            leaveTimeHandler()
+            limitHandler()
+        }
+
+        graphHandler.clearMiddleCity()
+        for(var vn = 0 ;vn < 31; vn++) {
+            if(checkmodel.get(vn).value) {
+                graphHandler.appendMiddleCity(vn)
+            }
+        }
+        console.log(graphHandler.middleCity)
+
+        graphHandler.generateResult()
+        console.log(graphHandler.citySequence)
+        console.log(graphHandler.tranName)
+    }
 }

@@ -4,7 +4,9 @@ QT += qml quick quickcontrols2 sql
 
 CONFIG += c++11
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    city_graph.cpp \
+    graph_handler.cpp
 
 RESOURCES += \  
     res.qrc
@@ -15,4 +17,6 @@ QML_IMPORT_PATH =
 DISTFILES += \
     MainWindow.qml
 
-HEADERS += 
+HEADERS += \ 
+    city_graph.h \
+    graph_handler.h
