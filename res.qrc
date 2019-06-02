@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/ui">
+        <file>ui/MainWindow.qml</file>
+        <file>ui/MainPage.qml</file>
+        <file>ui/fontawesome.ttf</file>
+    </qresource>
+</RCC>
