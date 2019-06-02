@@ -103,8 +103,11 @@ void GraphHandler::generateTotalPrice() {
 void GraphHandler::generateTotalTime() {
   switch (m_traveller.plan_type) {
   case TYPE_CHEAP:
-    m_totalTime = m_cityGraph.compute_time(
-        m_traveller.plan_result, m_traveller.plan_result[1].start_time);
+    m_totalTime =
+        m_traveller.plan_result.empty()
+            ? 0
+            : m_cityGraph.compute_time(m_traveller.plan_result,
+                                       m_traveller.plan_result[0].start_time);
     break;
   default:
     m_totalTime = m_cityGraph.compute_time(m_traveller.plan_result,

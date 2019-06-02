@@ -14,6 +14,8 @@ Page {
     width: parent.width
     height: parent.height
 
+    property int kount: 0
+
     // Common List Model for ComboBox
     ListModel {
         id: cityList
@@ -75,6 +77,7 @@ Page {
         height: parent.height
 
         Map {
+            id: map
             Layout.preferredHeight: parent.height
             Layout.preferredWidth: parent.width * 0.8
             plugin: mapPlugin
@@ -82,13 +85,10 @@ Page {
             zoomLevel: 5
 
             MapPolyline {
+                id: mapRoute
                 line.width: 2
                 line.color: 'red'
-                path: [
-                    { latitude: 39.91667, longitude: 116.41667 },
-                    { latitude: 35.03000, longitude: 110.97000 },
-                    { latitude: 34.26667, longitude: 108.95000 }
-                ]
+                path: []
             }
         }
 
@@ -212,13 +212,15 @@ Page {
                 ListView {
                     id: listView
                     model: checkmodel
-                    width: parent.width
-                    height: 200
                     delegate: CheckDelegate {
                         text: name + " ".repeat(20 - name.length) + "\t\t"
                         checked: value
-                        enabled: !(index === fromCityComboBox.currentIndex || index === toCityComboBox.currentIndex)
-                        onCheckStateChanged: checkmodel.setProperty(index ,"value", checked)
+                        enabled: (!(index === fromCityComboBox.currentIndex || index === toCityComboBox.currentIndex) &&
+                                  !(kount > 1 && planTypeComboBox.currentIndex === 2 && checked === false))
+                        onCheckStateChanged: {
+                            checkmodel.setProperty(index ,"value", checked)
+                            updateKount()
+                        }
                     }
                     flickableDirection: Flickable.VerticalFlick
 
@@ -237,8 +239,9 @@ Page {
                 Layout.preferredWidth: parent.width * 0.9
 
                 Text {
-                    width: parent.width * 0.3
+                    width: parent.width * 0.2
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    font.pointSize: 14
                     text: "策略类型: "
                 }
 
@@ -247,7 +250,7 @@ Page {
                     id: planTypeComboBox
                     Component.onCompleted: width = calcComboBoxImplicitWidth(planTypeComboBox)
                     currentIndex: 0
-                    model: ["最低价格", "最短时间", "规定时间内最少价格"]
+                    model: ["最低价格", "最短时间", "规定时间最少价格"]
                     onCurrentIndexChanged: {
                         graphHandler.planType = currentIndex
                     }
@@ -396,7 +399,7 @@ Page {
             graphHandler.beginMonth = dateBox.text.slice(5,7)
             graphHandler.beginYear = dateBox.text.slice(8,10)
         } else {
-            popup.popMessage = "Wrong Data!"
+            popup.popMessage = "Wrong Date!"
             popup.open()
             dateBox.clear()
         }
@@ -451,5 +454,61 @@ Page {
         graphHandler.generateResult()
         console.log(graphHandler.citySequence)
         console.log(graphHandler.tranName)
+        console.log(graphHandler.citySequence.length)
+        updateRoute()
+    }
+
+    function updateRoute() {
+        var positions = [
+                    QtPositioning.coordinate(39.929986, 116.395645),
+                    QtPositioning.coordinate(39.125595, 117.190186),
+                    QtPositioning.coordinate(31.231707, 121.472641),
+                    QtPositioning.coordinate(29.533155, 106.504959),
+                    QtPositioning.coordinate(38.045475, 114.502464),
+                    QtPositioning.coordinate(37.857014, 112.549248),
+                    QtPositioning.coordinate(34.757977, 113.665413),
+                    QtPositioning.coordinate(28.19409, 112.982277),
+                    QtPositioning.coordinate(30.584354, 114.298569),
+                    QtPositioning.coordinate(45.756966, 126.642464),
+                    QtPositioning.coordinate(43.886841, 125.324501),
+                    QtPositioning.coordinate(41.796768, 123.429092),
+                    QtPositioning.coordinate(30.659462, 104.065735),
+                    QtPositioning.coordinate(25.040609, 102.71225),
+                    QtPositioning.coordinate(26.578342, 106.713478),
+                    QtPositioning.coordinate(34.263161, 108.948021),
+                    QtPositioning.coordinate(36.061380, 103.834170),
+                    QtPositioning.coordinate(23.125177, 113.28064),
+                    QtPositioning.coordinate(22.82402, 108.320007),
+                    QtPositioning.coordinate(32.041546, 118.76741),
+                    QtPositioning.coordinate(30.287458, 120.15358),
+                    QtPositioning.coordinate(26.075302, 119.306236),
+                    QtPositioning.coordinate(36.675808, 117.000923),
+                    QtPositioning.coordinate(28.676493, 115.892151),
+                    QtPositioning.coordinate(31.861191, 117.283043),
+                    QtPositioning.coordinate(40.841490, 111.751990),
+                    QtPositioning.coordinate(29.644150, 91.11450),
+                    QtPositioning.coordinate(43.826630, 87.616880),
+                    QtPositioning.coordinate(38.486440, 106.232480),
+                    QtPositioning.coordinate(36.617290, 101.777820),
+                    QtPositioning.coordinate(20.044220, 110.199890) ]
+        mapRoute.path  = []
+        for(var i = 0; i < graphHandler.citySequence.length; i++) {
+                mapRoute.addCoordinate(positions[graphHandler.citySequence[i]])
+        }
+
+        mapRoute.visible = true
+        mapRoute.update()
+        map.update()
+        console.log(mapRoute.pathLength())
+    }
+
+    function updateKount() {
+        kount = 0
+        for(var i = 0; i < 31; i++) {
+            if(checkmodel.get(i).value) {
+                kount++
+            }
+        }
+        console.log(kount)
     }
 }
