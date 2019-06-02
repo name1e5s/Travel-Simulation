@@ -9,7 +9,7 @@ using std::shuffle;
 
 CityGraph::CityGraph() {
   this->init();
-  this->print_edge();
+  //this->print_edge();
   this->floyd();
   this->spfa();
 }
@@ -83,6 +83,40 @@ void CityGraph::print_edge() {
   }
 }
 
+void CityGraph::init_cities() {
+    this->find_city("BJ");
+    this->find_city("TJ");
+    this->find_city("SH");
+    this->find_city("CQ");
+    this->find_city("SJZ");
+    this->find_city("TY");
+    this->find_city("ZZ");
+    this->find_city("CS");
+    this->find_city("WH");
+    this->find_city("HEB");
+    this->find_city("CC");
+    this->find_city("SY");
+    this->find_city("CD");
+    this->find_city("KM");
+    this->find_city("GY");
+    this->find_city("XA");
+    this->find_city("LZ");
+    this->find_city("GZ");
+    this->find_city("NN");
+    this->find_city("NJ");
+    this->find_city("HZ");
+    this->find_city("FZ");
+    this->find_city("JN");
+    this->find_city("NC");
+    this->find_city("HF");
+    this->find_city("HHHT");
+    this->find_city("LS");
+    this->find_city("WLMQ");
+    this->find_city("YC");
+    this->find_city("XN");
+    this->find_city("HK");
+}
+
 // Read the data from file.
 // Data format: <start time(by hours)> <duration(by hours)> <price><end
 // of line> For example:
@@ -149,6 +183,13 @@ int CityGraph::compute_time(const vector<Transport> &plan, int begin_time) {
   for (const auto &i : plan)
     t = pick_tran(t, &i);
   return t - begin_time;
+}
+
+int CityGraph::compute_price(const vector<Transport> &plan) {
+    int t = 0;
+    for (const auto &i : plan)
+        t += i.price;
+    return t;
 }
 
 // Returns fastest time of the given middle city sequence.
@@ -296,7 +337,6 @@ vector<Transport> CityGraph::get_fastest_route(Traveller &t) {
     auto tmp_sa = simulated_annealing(HIGHTEMP, i, t);
     auto tmp = get_fastest_route(t, tmp_sa, i);
     auto tmp_time = compute_time(tmp_sa, t, i);
-      std::cout << "CCCC: " << tmp_time << std::endl;
     if (tmp_time < best_time) {
       result = tmp;
       best_time = tmp_time;
@@ -494,7 +534,6 @@ void CityGraph::dfs(Traveller &t, int money, int begin_time, int time) {
     int city_idx = t.get_middle_index(t.current_city_index);
     if (city_idx >= 0) {
       t.middle_city_index.erase(t.middle_city_index.begin() + city_idx);
-      std::cout << "FFF\n";
       dfs(t, money + temp->price, begin_time,
           pick_tran(time + begin_time, temp) - begin_time);
       t.current_city_index = now;
@@ -531,5 +570,9 @@ void CityGraph::get_route(Traveller &t) {
       }
       t.plan_result = best_route;
     }
+      if(t.plan_result.empty() || compute_time(t.plan_result, t.leave_time) > t.time_limit) {
+          std::cout << "Error: time " << compute_time(t.plan_result, t.leave_time) << std::endl;
+          t.plan_result = get_fastest_route(t);
+      }
   }
 }

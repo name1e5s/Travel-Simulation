@@ -7,16 +7,12 @@ int main() {
   std::cout << "Hello, World!" << std::endl;
     Traveller t;
     t.plan_type = TYPE_CHEAP_LIMITED;
-    t.leave_time = 12;
+    t.leave_time = 14;
     t.source_city_index = 0;
-    t.dest_city_index = 2;
-    t.time_limit = 10;
-    /*
-    t.middle_city_index.push_back(5);
-    t.middle_city_index.push_back(16);
-    t.middle_city_index.push_back(28);
-     */
+    t.dest_city_index = 28;
+    t.time_limit = 9;
+    t.middle_city_index.push_back(15);
     cityGraph.get_route(t);
-    std::cout << cityGraph.compute_price(t.middle_city_index , t);
+    std::cout << cityGraph.compute_price(t.plan_result) << std::endl;
   return 0;
 }

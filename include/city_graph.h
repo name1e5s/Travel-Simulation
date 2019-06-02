@@ -101,11 +101,13 @@ public:
   void print_edge(); // For debug
   void get_route(Traveller &);
     int compute_price(const vector<int> &, const Traveller &) const;
+    int compute_price(const vector<Transport> &);
   map<int, string> index_city;
   map<string, int> city_index;
 
 private:
   void init(const char *path = "/home/name1e5s/Projects/Travel-Simulation/edges.dat");
+    void init_cities();
   void add_edge(string, transport_t, int, int, int, int, int);
   int find_city(const string &);
 
