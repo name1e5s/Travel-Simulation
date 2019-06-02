@@ -148,6 +148,6 @@ private:
   int min_cost;
   int best_route_time;
   vector<Transport> best_route, curr_route;
-  void dfs(Traveller &, int, int, int);
+  void dfs(Traveller &, int, int, int, int);
 };
 #endif

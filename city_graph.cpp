@@ -121,9 +121,9 @@ void CityGraph::init(const char *path) {
         for (int k = 0; k < 24; k++)
           fastest_time[i][j][k] = k;
       }
-      cheapest_route[i][j].resize(0); // CLear all
+      cheapest_route[i][j].resize(0); // Clear all
       for (int k = 0; k < 24; k++)
-        fastest_route[i][j][k].resize(0); // CLear all
+        fastest_route[i][j][k].resize(0); // Clear all
     }
     city[i].first_transport = nullptr;
   }
@@ -231,7 +231,7 @@ int CityGraph::compute_expected_time(Traveller &t, int begin_time) {
   if (guess_time_1 > guess_time_2)
     std::swap(guess_time_1, guess_time_2);
 
-  return (((guess_time_2 * 2) - guess_time_1) * 3) / 2;
+  return ((guess_time_2 * 2) - guess_time_1) * 2;
 }
 // Returns end time when we pick the Transport EDGE at
 // begin_time. End time may be larger than 24. The function should be const.
@@ -494,7 +494,10 @@ vector<int> CityGraph::simulated_annealing(const double initial_temperature,
   }
 }
 
-void CityGraph::dfs(Traveller &t, int money, int begin_time, int time) {
+// void CityGraph::beam(Traveller &t, int begin_time) {}
+
+void CityGraph::dfs(Traveller &t, int money, int begin_time, int time,
+                    int depth) {
   if ((t.current_city_index == t.dest_city_index) &&
       (t.middle_city_index.empty())) {
     if ((min_cost > money) && (time <= t.time_limit)) {
@@ -506,7 +509,7 @@ void CityGraph::dfs(Traveller &t, int money, int begin_time, int time) {
     }
   }
 
-  if (time + compute_expected_time(t, time) > t.time_limit ||
+  if (depth == 0 || time + compute_expected_time(t, time) > t.time_limit ||
       money + compute_expected_price(t) > min_cost) {
     return;
   }
@@ -522,13 +525,13 @@ void CityGraph::dfs(Traveller &t, int money, int begin_time, int time) {
     if (city_idx >= 0) {
       t.middle_city_index.erase(t.middle_city_index.begin() + city_idx);
       dfs(t, money + temp->price, begin_time,
-          pick_tran(time + begin_time, temp) - begin_time);
+          pick_tran(time + begin_time, temp) - begin_time, depth - 1);
       t.current_city_index = now;
       t.middle_city_index.insert(t.middle_city_index.begin() + city_idx,
                                  temp->dest_city);
     } else
       dfs(t, money + temp->price, begin_time,
-          pick_tran(time + begin_time, temp) - begin_time);
+          pick_tran(time + begin_time, temp) - begin_time, depth - 1);
 
     t.current_city_index = now;
     curr_route.pop_back();
@@ -553,13 +556,13 @@ void CityGraph::get_route(Traveller &t) {
         min_cost = 0;
         for (auto &i : best_route)
           min_cost += i.price;
-        dfs(t, 0, t.leave_time, 0);
+        dfs(t, 0, t.leave_time, 0, t.middle_city_index.size());
       }
       t.plan_result = best_route;
-    }
-    if (t.plan_result.empty() ||
-        compute_time(t.plan_result, t.leave_time) > t.time_limit) {
-      t.plan_result = get_fastest_route(t);
+      if (t.plan_result.empty() ||
+          compute_time(t.plan_result, t.leave_time) > t.time_limit) {
+        t.plan_result = get_fastest_route(t);
+      }
     }
   }
 }

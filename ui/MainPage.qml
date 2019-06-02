@@ -216,7 +216,7 @@ Page {
                         text: name + " ".repeat(20 - name.length) + "\t\t"
                         checked: value
                         enabled: (!(index === fromCityComboBox.currentIndex || index === toCityComboBox.currentIndex) &&
-                                  !(kount > 1 && planTypeComboBox.currentIndex === 2 && checked === false))
+                                  !(kount > 3 && planTypeComboBox.currentIndex === 2 && checked === false))
                         onCheckStateChanged: {
                             checkmodel.setProperty(index ,"value", checked)
                             updateKount()
