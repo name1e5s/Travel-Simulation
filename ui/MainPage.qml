@@ -1,4 +1,4 @@
-import QtQuick 2.12
+﻿import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.3
@@ -17,37 +17,37 @@ Page {
     // Common List Model for ComboBox
     ListModel {
         id: cityList
-        ListElement { text: qsTr("Beijing") }
-        ListElement { text: qsTr("Tianjin") }
-        ListElement { text: qsTr("ShangHai") }
-        ListElement { text: qsTr("ChongQing") }
-        ListElement { text: qsTr("ShiJiaZhuang") }
-        ListElement { text: qsTr("TaiYuan") }
-        ListElement { text: qsTr("ZhengZhou") }
-        ListElement { text: qsTr("ChangSha") }
-        ListElement { text: qsTr("WuHan") }
-        ListElement { text: qsTr("HarBin") }
-        ListElement { text: qsTr("ChangChun") }
-        ListElement { text: qsTr("ShenYang") }
-        ListElement { text: qsTr("ChengDu") }
-        ListElement { text: qsTr("KunMing") }
-        ListElement { text: qsTr("GuiYang") }
-        ListElement { text: qsTr("Xi'an") }
-        ListElement { text: qsTr("LanZhou") }
-        ListElement { text: qsTr("GuangZhou") }
-        ListElement { text: qsTr("NanNing") }
-        ListElement { text: qsTr("NanJing") }
-        ListElement { text: qsTr("HangZhou") }
-        ListElement { text: qsTr("FuZhou") }
-        ListElement { text: qsTr("JiNan") }
-        ListElement { text: qsTr("NanChang") }
-        ListElement { text: qsTr("HeFei") }
-        ListElement { text: qsTr("HuHeHaoTe") }
-        ListElement { text: qsTr("LaSa") }
-        ListElement { text: qsTr("Urumuqi") }
-        ListElement { text: qsTr("YinChuan") }
-        ListElement { text: qsTr("XiNing") }
-        ListElement { text: qsTr("HaiKou") }
+        ListElement { text: qsTr("北京") }
+        ListElement { text: qsTr("天津") }
+        ListElement { text: qsTr("上海") }
+        ListElement { text: qsTr("重庆") }
+        ListElement { text: qsTr("石家庄") }
+        ListElement { text: qsTr("太原") }
+        ListElement { text: qsTr("郑州") }
+        ListElement { text: qsTr("长沙") }
+        ListElement { text: qsTr("武汉") }
+        ListElement { text: qsTr("哈尔滨") }
+        ListElement { text: qsTr("长春") }
+        ListElement { text: qsTr("沈阳") }
+        ListElement { text: qsTr("成都") }
+        ListElement { text: qsTr("昆明") }
+        ListElement { text: qsTr("贵阳") }
+        ListElement { text: qsTr("西安") }
+        ListElement { text: qsTr("兰州") }
+        ListElement { text: qsTr("广州") }
+        ListElement { text: qsTr("南宁") }
+        ListElement { text: qsTr("南京") }
+        ListElement { text: qsTr("杭州") }
+        ListElement { text: qsTr("福州") }
+        ListElement { text: qsTr("济南") }
+        ListElement { text: qsTr("南昌") }
+        ListElement { text: qsTr("合肥") }
+        ListElement { text: qsTr("呼和浩特") }
+        ListElement { text: qsTr("拉萨") }
+        ListElement { text: qsTr("乌鲁木齐") }
+        ListElement { text: qsTr("银川") }
+        ListElement { text: qsTr("西宁") }
+        ListElement { text: qsTr("海口") }
     }
 
     GraphHandler {
@@ -57,11 +57,11 @@ Page {
     Connections {
         target: graphHandler
         onTotalPriceChanged: {
-            totalPriceText.text = "Price: " + graphHandler.totalPrice
+            totalPriceText.text = "总价格: " + graphHandler.totalPrice
         }
 
         onTotalTimeChanged: {
-            totalTimeText.text = "Time: " + graphHandler.totalTime
+            totalTimeText.text = "总时间: " + graphHandler.totalTime
         }
     }
 
@@ -107,7 +107,7 @@ Page {
                 Text {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     width: parent.width * 0.1
-                    text: qsTr("From:")
+                    text: qsTr("始发:")
                 }
 
                 ComboBox {
@@ -126,7 +126,7 @@ Page {
                 Text {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     width: parent.width * 0.1
-                    text: qsTr("To:")
+                    text: qsTr("终到:")
                 }
 
                 ComboBox {
@@ -147,7 +147,7 @@ Page {
             Text {
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 width: parent.width * 0.1
-                text: qsTr("LEAVE DATE")
+                text: qsTr("出发日期")
             }
 
             TextField {
@@ -191,7 +191,7 @@ Page {
 
 
             Text {
-                text: "SELECT CICIES"
+                text: "途径城市"
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
             }
 
@@ -239,7 +239,7 @@ Page {
                 Text {
                     width: parent.width * 0.3
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    text: "Plan Type: "
+                    text: "策略类型: "
                 }
 
                 ComboBox {
@@ -247,7 +247,7 @@ Page {
                     id: planTypeComboBox
                     Component.onCompleted: width = calcComboBoxImplicitWidth(planTypeComboBox)
                     currentIndex: 0
-                    model: ["Least Cost", "Best Time", "Best Perf"]
+                    model: ["最低价格", "最短时间", "规定时间内最少价格"]
                     onCurrentIndexChanged: {
                         graphHandler.planType = currentIndex
                     }
@@ -260,7 +260,7 @@ Page {
 
                 TextField {
                     id: hourBox
-                    placeholderText: qsTr("Leave time ...")
+                    placeholderText: qsTr("出发时间(小时) ...")
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     inputMethodHints: Qt.ImhDigitsOnly
                     enabled: planTypeComboBox.currentIndex === 2
@@ -271,7 +271,7 @@ Page {
 
                 TextField {
                     id: limitBox
-                    placeholderText: qsTr("Time limit...")
+                    placeholderText: qsTr("时间限制(小时)...")
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     inputMethodHints: Qt.ImhDigitsOnly
                     enabled: planTypeComboBox.currentIndex === 2
@@ -291,7 +291,7 @@ Page {
 
                 Text {
                     anchors.centerIn: parent
-                    text: "Log Here"
+                    text: "这里是日志"
                     font.pointSize: 18
                     color: "#18f018"
                 }
@@ -312,7 +312,7 @@ Page {
                     ToolTip.delay: 1000
                     ToolTip.timeout: 5000
                     ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Do Plan.")
+                    ToolTip.text: qsTr("开始规划")
                     onClicked: {
                         runPlan()
                     }
@@ -329,7 +329,7 @@ Page {
                     ToolTip.delay: 1000
                     ToolTip.timeout: 5000
                     ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Run Simulation.")
+                    ToolTip.text: qsTr("模拟旅行")
                 }
 
                 Button {
@@ -343,7 +343,7 @@ Page {
                     ToolTip.delay: 1000
                     ToolTip.timeout: 5000
                     ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Save Log.")
+                    ToolTip.text: qsTr("保存日志")
                 }
 
             }
@@ -357,7 +357,7 @@ Page {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     width: parent.width * 0.4
                     font.pointSize: 14
-                    text: qsTr("Time:")
+                    text: qsTr("总时间: 0")
                 }
 
                 Text {
@@ -365,7 +365,7 @@ Page {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     width: parent.width * 0.4
                     font.pointSize: 14
-                    text: qsTr("Price:")
+                    text: qsTr("总价格: 0")
                 }
             }
 
