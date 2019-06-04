@@ -1,4 +1,4 @@
-#include "graph_handler.h"
+﻿#include "graph_handler.h"
 #include <QDebug>
 
 GraphHandler::GraphHandler(QObject *parent) : QObject(parent), m_cityGraph() {
@@ -25,6 +25,7 @@ void GraphHandler::setMiddleCity(const QVector<int> &middleCity) {
 }
 
 void GraphHandler::appendMiddleCity(int value) {
+    qDebug() << "APPEND " << value;
   m_traveller.middle_city_index.push_back(value);
 }
 

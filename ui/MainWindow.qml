@@ -1,4 +1,4 @@
-import QtQuick 2.12
+﻿import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.3
@@ -16,12 +16,6 @@ ApplicationWindow {
 
      Material.theme: Material.Light
      Material.accent: Material.Teal
-
-    FontLoader {
-        id: fontAwesome
-        name: "fontawesome"
-        source: "qrc:/ui/ui/fontawesome.ttf"
-    }
 
     StackView{
         id: stackView

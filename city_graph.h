@@ -1,4 +1,4 @@
-#ifndef CITY_GRAPH
+﻿#ifndef CITY_GRAPH
 #define CITY_GRAPH
 // Basic definitions
 #define MAX_VERT 50
@@ -86,7 +86,7 @@ struct Traveller {
   int time_all, price_all;
   // void run_simulation();
   int get_middle_index(int city_idx) {
-    for (uint i = 0; i < middle_city_index.size(); ++i)
+    for (uint32_t i = 0; i < middle_city_index.size(); ++i)
       if (middle_city_index[i] == city_idx)
         return i;
     return -1;
@@ -106,7 +106,7 @@ public:
 
 private:
   void init(
-      const char *path = "/home/name1e5s/Projects/Travel-Simulation/edges.dat");
+      const char *path = "../Travel-Simulation/edges.dat");
   void init_cities();
   void add_edge(string, transport_t, int, int, int, int, int);
   int find_city(const string &);
