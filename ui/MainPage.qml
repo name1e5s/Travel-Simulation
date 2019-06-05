@@ -127,6 +127,21 @@ Page {
         onTotalTimeChanged: {
             totalTimeText.text = "总时间: " + graphHandler.totalTime
         }
+
+        onLogUpdated: {
+            if(type === 1)
+                logText.text = logInfo.arg(cityList.get(src_1).text)
+            else if(type === 2)
+                logText.text = logInfo.arg(cityList.get(src_1).text).arg(cityList.get(src_2).text)
+            else
+                logText.text = logInfo
+            graphHandler.receiveNewLog(logText.text)
+        }
+
+        onSimulationDone: {
+            runPlanButton.enabled = true
+            saveLogButton.enabled = true
+        }
     }
 
     Plugin {
@@ -141,7 +156,7 @@ Page {
         Map {
             id: map
             Layout.preferredHeight: parent.height
-            Layout.preferredWidth: parent.width * 0.8
+            Layout.preferredWidth: parent.width * 0.75
             plugin: mapPlugin
             center: QtPositioning.coordinate(36.858, 104.676)
             zoomLevel: 5
@@ -155,7 +170,7 @@ Page {
         }
 
         ColumnLayout {
-            Layout.preferredWidth: parent.width * 0.2
+            Layout.preferredWidth: parent.width * 0.25
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
             Rectangle {
@@ -269,12 +284,18 @@ Page {
                 height: 10
             }
 
+            RowLayout {
+                Rectangle {
+                    width: 25
+                }
             ColumnLayout {
+                Layout.alignment: Qt.AlignHCenter
                 ListView {
+                    Layout.alignment: Qt.AlignCenter
                     id: listView
                     model: checkmodel
                     delegate: CheckDelegate {
-                        text: name + " ".repeat(15 - name.length) + "\t\t"
+                        text: name + " ".repeat(20 - name.length) + "\t\t"
                         checked: value
                         enabled: (!(index === fromCityComboBox.currentIndex
                                     || index === toCityComboBox.currentIndex)
@@ -294,6 +315,10 @@ Page {
                     ScrollBar.vertical: ScrollBar {
                     }
                 }
+            }
+            Rectangle {
+                width: 25
+            }
             }
 
             Rectangle {
@@ -358,9 +383,11 @@ Page {
                 border.color: Material.accent
 
                 Text {
+                    id: logText
                     anchors.centerIn: parent
                     text: "这里是日志"
-                    font.pointSize: 18
+                    font.pointSize: 10
+                    font.bold: true
                     color: "#18f018"
                 }
             }
@@ -398,6 +425,11 @@ Page {
                     ToolTip.timeout: 5000
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("模拟旅行")
+                    onClicked: {
+                        runPlanButton.enabled = false
+                        saveLogButton.enabled = false
+                        graphHandler.runSimulation()
+                    }
                 }
 
                 Button {
@@ -412,6 +444,9 @@ Page {
                     ToolTip.timeout: 5000
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("保存日志")
+                    onClicked: {
+                        graphHandler.saveLog()
+                    }
                 }
             }
 
@@ -460,13 +495,14 @@ Page {
 
     function handleDateBox() {
         if (isValidDate(dateBox.text)) {
-            graphHandler.beginYear = dateBox.text.slice(0, 4)
-            graphHandler.beginMonth = dateBox.text.slice(5, 7)
-            graphHandler.beginYear = dateBox.text.slice(8, 10)
+            graphHandler.beginYear = Number(dateBox.text.slice(0, 4))
+            graphHandler.beginMonth = Number(dateBox.text.slice(5, 7))
+            graphHandler.beginDate = Number(dateBox.text.slice(8, 10))
         } else {
             popup.popMessage = "Wrong Date!"
             popup.open()
             dateBox.clear()
+            dateBox.text = "1989-06-04"
         }
     }
 

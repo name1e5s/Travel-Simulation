@@ -65,6 +65,22 @@ struct Transport {
   Transport *next_transport;
 };
 
+typedef enum { ROUTE, CITY } result_t;
+
+struct ResultNode {
+    int beginHour;
+    result_t resultType;
+    // For CITY
+    int waitCityIndex;
+    // For ROUTE
+    Transport transport;
+};
+
+struct PlanResult {
+    int startHour;
+    vector<ResultNode> result;
+};
+
 // Record the city name and transports start from
 // this city. Usually as a vertex of the graph.
 struct City {

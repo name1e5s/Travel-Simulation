@@ -20,3 +20,8 @@ DISTFILES += \
 HEADERS += \ 
     city_graph.h \
     graph_handler.h
+
+# For GNU Compiler Collection.
+#*-g++* {
+#    QMAKE_CXXFLAGS += -Ofast -frename-registers -fopenmp -D_GLIBCXX_PARALLEL -funroll-loops -malign-double -minline-all-stringops -ftree-parallelize-loops=8 -flto -fuse-linker-plugin
+#}

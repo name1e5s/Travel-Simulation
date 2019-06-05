@@ -1,8 +1,9 @@
-#ifndef GRAPH_HANDLER_H
+﻿#ifndef GRAPH_HANDLER_H
 #define GRAPH_HANDLER_H
 
 #include <QObject>
 #include <QVector>
+#include <QTimer>
 #include <city_graph.h>
 
 class GraphHandler : public QObject {
@@ -30,6 +31,9 @@ public:
 
   Q_INVOKABLE void appendMiddleCity(int value);
   Q_INVOKABLE void clearMiddleCity();
+    Q_INVOKABLE void runSimulation();
+    Q_INVOKABLE void saveLog();
+  Q_INVOKABLE    void receiveNewLog(QString string);
   int beginYear() const;
   void setBeginYear(int beginYear);
 
@@ -72,16 +76,22 @@ public:
 signals:
   void totalTimeChanged();
   void totalPriceChanged();
+  void simulationDone();
+  void logUpdated(QString logInfo, int src_1, int src_2, int type);
 
 public slots:
+  void printNewLog();
 private:
   void generateCitySequence();
   void generateTotalTime();
   void generateTotalPrice();
+  void generatePlanResult();
   int m_beginYear, m_beginMonth, m_beginDate;
   int m_totalTime, m_totalPrice;
   CityGraph m_cityGraph;
   Traveller m_traveller;
+  PlanResult m_planResult;
+  QTimer m_simulateTimer;
   QVector<int> m_citySequence;
   QVector<QString> m_tranName;
 };
