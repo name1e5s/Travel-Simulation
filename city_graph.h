@@ -68,17 +68,17 @@ struct Transport {
 typedef enum { ROUTE, CITY } result_t;
 
 struct ResultNode {
-    int beginHour;
-    result_t resultType;
-    // For CITY
-    int waitCityIndex;
-    // For ROUTE
-    Transport transport;
+  int beginHour;
+  result_t resultType;
+  // For CITY
+  int waitCityIndex;
+  // For ROUTE
+  Transport transport;
 };
 
 struct PlanResult {
-    int startHour;
-    vector<ResultNode> result;
+  int startHour;
+  vector<ResultNode> result;
 };
 
 // Record the city name and transports start from
@@ -121,8 +121,7 @@ public:
   map<string, int> city_index;
 
 private:
-  void init(
-      const char *path = "../Travel-Simulation/edges.dat");
+  void init(const char *path = "../Travel-Simulation/edges.dat");
   void init_cities();
   void add_edge(string, transport_t, int, int, int, int, int);
   int find_city(const string &);

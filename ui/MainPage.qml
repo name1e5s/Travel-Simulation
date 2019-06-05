@@ -129,10 +129,11 @@ Page {
         }
 
         onLogUpdated: {
-            if(type === 1)
+            if (type === 1)
                 logText.text = logInfo.arg(cityList.get(src_1).text)
-            else if(type === 2)
-                logText.text = logInfo.arg(cityList.get(src_1).text).arg(cityList.get(src_2).text)
+            else if (type === 2)
+                logText.text = logInfo.arg(cityList.get(src_1).text).arg(
+                            cityList.get(src_2).text)
             else
                 logText.text = logInfo
             graphHandler.receiveNewLog(logText.text)
@@ -273,8 +274,8 @@ Page {
                 Component.onCompleted: {
                     for (var i = 0; i < 31; i++) {
                         checkmodel.append({
-                                              "name": cityList.get(i).text,
-                                              "value": false
+                                              name: cityList.get(i).text,
+                                              value: false
                                           })
                     }
                 }
@@ -288,37 +289,37 @@ Page {
                 Rectangle {
                     width: 25
                 }
-            ColumnLayout {
-                Layout.alignment: Qt.AlignHCenter
-                ListView {
-                    Layout.alignment: Qt.AlignCenter
-                    id: listView
-                    model: checkmodel
-                    delegate: CheckDelegate {
-                        text: name + " ".repeat(20 - name.length) + "\t\t"
-                        checked: value
-                        enabled: (!(index === fromCityComboBox.currentIndex
-                                    || index === toCityComboBox.currentIndex)
-                                  && !(kount > 1
-                                       && planTypeComboBox.currentIndex === 2
-                                       && checked === false))
-                        onCheckStateChanged: {
-                            checkmodel.setProperty(index, "value", checked)
-                            updateKount()
+                ColumnLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    ListView {
+                        Layout.alignment: Qt.AlignCenter
+                        id: listView
+                        model: checkmodel
+                        delegate: CheckDelegate {
+                            text: name + " ".repeat(20 - name.length) + "\t\t"
+                            checked: value
+                            enabled: (!(index === fromCityComboBox.currentIndex
+                                        || index === toCityComboBox.currentIndex)
+                                      && !(kount > 1
+                                           && planTypeComboBox.currentIndex === 2
+                                           && checked === false))
+                            onCheckStateChanged: {
+                                checkmodel.setProperty(index, "value", checked)
+                                updateKount()
+                            }
+                        }
+                        flickableDirection: Flickable.VerticalFlick
+
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+
+                        ScrollBar.vertical: ScrollBar {
                         }
                     }
-                    flickableDirection: Flickable.VerticalFlick
-
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-
-                    ScrollBar.vertical: ScrollBar {
-                    }
                 }
-            }
-            Rectangle {
-                width: 25
-            }
+                Rectangle {
+                    width: 25
+                }
             }
 
             Rectangle {

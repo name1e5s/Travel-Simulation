@@ -14,10 +14,10 @@ ApplicationWindow {
     maximumHeight: height
     title: qsTr("Travel Simulation")
 
-     Material.theme: Material.Light
-     Material.accent: Material.Teal
+    Material.theme: Material.Light
+    Material.accent: Material.Teal
 
-    StackView{
+    StackView {
         id: stackView
         focus: true
         anchors.fill: parent

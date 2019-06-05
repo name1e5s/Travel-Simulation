@@ -1,7 +1,7 @@
 ﻿#include <QDebug>
+#include <algorithm>
 #include <bits/stdc++.h>
 #include <city_graph.h>
-#include <algorithm>
 
 using std::deque;
 using std::shuffle;
@@ -560,10 +560,11 @@ void CityGraph::get_route(Traveller &t) {
         dfs(t, 0, t.leave_time, 0, 5);
       }
       t.plan_result = best_route;
-      auto fastest_result = get_fastest_route(t,simulated_annealing(HIGHTEMP, t.leave_time, t),t.leave_time);
+      auto fastest_result = get_fastest_route(
+          t, simulated_annealing(HIGHTEMP, t.leave_time, t), t.leave_time);
       if (t.plan_result.empty() ||
           compute_time(t.plan_result, t.leave_time) > t.time_limit ||
-              compute_price(fastest_result) < compute_price(t.plan_result)) {
+          compute_price(fastest_result) < compute_price(t.plan_result)) {
         t.plan_result = fastest_result;
       }
     }
