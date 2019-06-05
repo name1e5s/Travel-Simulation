@@ -94,7 +94,6 @@ void GraphHandler::generateResult() {
   generateCitySequence();
   generateTotalPrice();
   generateTotalTime();
-  generatePlanResult();
 }
 
 void GraphHandler::generateCitySequence() {
@@ -178,6 +177,7 @@ void GraphHandler::generatePlanResult() {
 
   currentTime = m_planResult.startHour; // Initialize time.
   logDate = QDate(m_beginYear, m_beginMonth, m_beginDate);
+  log_i = 0;
   // Wait at source city?
   if (m_planResult.startHour != m_traveller.plan_result[0].start_time) {
     ResultNode temp;
@@ -287,7 +287,10 @@ void GraphHandler::printNewLog() {
   }
 }
 
-void GraphHandler::runSimulation() { m_simulateTimer.start(); }
+void GraphHandler::runSimulation() {
+  generatePlanResult();
+  m_simulateTimer.start();
+}
 
 void GraphHandler::receiveNewLog(QString string) { logFile.push_back(string); }
 
