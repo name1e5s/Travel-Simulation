@@ -95,6 +95,28 @@
 
 \chapter{总体设计}
 
+该程序主体部分主要分为算法，图形界面，中间层三个模块。爬虫部分分为两个模块，分别处理来自于 12306 以及携程网的数据。因为爬虫部分过于简单，在此仅仅介绍主体部分的设计，以下是详细介绍。
+
+主体部分的包含关系见图~\ref{main_cpp}~。其中的 \textbf{main.cpp} 是程序的入口点，Qt 的初始化以及文件的载入都在此处进行；\textbf{graph\_handler.h} 以及与之对应的 .cpp 文件则是算法层与图形界面的交互层，在这里算法层提供的接口被包装为 QML 可以调用的函数以及 Qt 的信号和槽；\textbf{city\_graph.h} 以及与之对应的 .cpp 文件是算法部分，在这里实现了三种策略的算法。
+
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=1\textwidth]{main_8cpp__incl.png}
+	\caption{主体部分的包含关系}
+	\label{main_cpp}
+\end{figure}
+
+中间层对于算法部分的调用除了基本的设置各种初始值外，均集中于 \textbf{GraphHandler::generateResult} 函数内，该函数的调用图见图~\ref{genR}~。
+
+ \begin{figure}[!htbp]
+ 	\centering
+ 	\includegraphics[width=1\textwidth]{graph_handler_generateResult.png}
+ 	\caption{GraphHandler::generateResult}
+ 	\label{genR}
+ \end{figure}
+
+主体部分的图形界面使用 Qt 实现，通过对 QML 的使用，我们很好地将前后端进行了分离，两者之间仅通过中间层以及信号和槽的方式进行必要的交互。
+
 \chapter{算法实现}
 
 \section{价格最低策略}
@@ -156,6 +178,58 @@ static inline double accept_rate(const int &new_energy, const int &old_energy, c
 \end{algorithmic}
 \end{algorithm}
 
+\section{时间最短策略}
+
+在时间最短策略下寻找最优策略的思路于上一策略一致，都是使用\textbf{预处理 + 模拟退火}的方式实现快速求解。两者的不同就是在时间最短策略中，时间这一维度产生了重要的影响，也就是说，鲈形者的离开时间左右了算法的结果。不过好在一天只有二十四个小时，因此对于每一对城市每到整点时刻的最优结果记录一下即可。在这里，为了体现出于上一个策略的不同，我们使用了平均时间复杂度为 $O(e)$ 的 SPFA\footnote{段凡丁.关于最短路径的SPFA快速算法[J].西南交通大学学报,1994(02):207-212.}算法进行求解。其伪代码见算法~\ref{SPFA}~。
+
+\begin{algorithm}[H]
+	\caption{\label{SPFA}The SPFA Algorithm}
+	\begin{algorithmic}[1]
+		\Procedure{Spfa}{}
+		\State Let $s$ be the source of the graph, $Q$ be a queue
+		\For{\textbf{each} vertex $v$}
+		\State $d[v] \gets +\infty$
+		\State $flag[v] \gets false$
+		\EndFor
+		\State $d[s] \gets 0$
+		\State $Q \gets {s}$
+		\State $flag[s] \gets true$
+		\While{ $Q \neq \Phi$ }
+		\State $ u \gets Q.deque() $
+		\State $flag[u] \gets false$
+		\For{\textbf{each} vertex $v \in adj(u)$}
+		\If{$d[v] > d[u] + \omega(u,v)$}
+		\State $d[v] > d[u] + \omega(u,v)$
+		\If{$flag[v] = false$}
+		\State $Q.enqueue(v)$
+		\State $flag[v] \gets true$
+		\EndIf
+		\EndIf
+		\EndFor
+		\EndWhile
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+在对松弛的条件进行修改后，我们即可将之应用在我们的数据集上。最后使用模拟退火算法求解最优的中间城市次序即可。
+
+\section{带时限的价格最低策略}
+此时时间的限制对我们算法的策略选择有了很大关系，当时限很宽松时，旅行者大可选择最便宜的出行策略。但是当时限较为紧张时，旅行者就需要在各种情况下做出取舍，其结果很可能是杂乱无章的。此时如果继续使用模拟退火，其结果难以保证，甚至会产生又贵又慢的滑稽结果。因此，在这里我们选择了比较传统的 \textbf{DFS} 算法进行求解。
+
+但是对于普通的 DFS 而言，我们的数据太过庞大(31 个城市， 5K+ 条线路)，难以在可以接受的时间内得到结果。因此，为了减少运行时间，我们将 DFS 修改为 \textbf{有界深度优先搜索} 算法，同时使用启发式策略进行减枝处理。最终可以实现在 0.1 - 30 秒内得到较好的解。
+
+\chapter{图形界面}
+
+图形界面部分使用 Qt 的 QML 进行实现。QML 是一种多范式语言，其能使对象能够根据其属性以及如何关联和响应其他对象的更改来定义对象。与纯粹的命令式代码不同，属性和行为的变化通过一系列逐步处理的语句表达。QML 的声明性语法将属性和行为更改直接集成到单个对象的定义中，这些属性定义可以包含必要的代码，在情况复杂的自定义应用程序行为是必要的。其语法类似 CSS，适用于描述复杂的界面关系，辅以 C++ 可以快速实现出界面好看的应用程序。
+
+该软件的界面风格来源于\href{https://www.google.com/design/spec/material-design/introduction.html}{Google Material Design Guidelines}，见图~\ref{gui}~。共分为两大部分，左侧为完整的可以任意缩放的地图\footnote{数据来自\href{https://www.openstreetmap.org}{OpenStreetMap}，在此表示衷心的感谢}，规划后的路径会以红线的形式显示在地图上面；右侧是控制部分，用户的输入以及日志的输出都在这里进行。为了优化触屏用户的体验，控制栏尽可能地减少了用户自己输入的部分，只有日期、离开时间以及时限需要自己手动输入，其余部分仅需要滑动以及点选既可。
+
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=1\textwidth]{gui.png}
+	\caption{主体部分的包含关系}
+	\label{gui}
+\end{figure}
 
 \chapter{爬虫部分}
 该系统的爬虫部分主要采用 Python 的 requests 库实现，辅以代理池等技术保证不被网站的反爬虫技术限制。最终在 12306 上爬取到车票信息 14655 条，在携程网上爬取机票信息 930 条。该部分的源码现已开源，网址为 \href{https://github.com/kuso-kodo/kuso\_12306}{https://github.com/kuso-kodo/kuso\_12306}。
@@ -245,8 +319,6 @@ def get_flight_prices(site_info, time_info):
 \end{lstlisting}
 
 为了加快爬取速度以及防止被限制，我们在这里使用公开的 IP 代理信息搭建了代理池，最终在十分钟内爬取了 31 个城市间的飞机信息共 930 条。
-\chapter{图形界面}
-
 \chapter{日志模块}
 
 \chapter{测试与分析}

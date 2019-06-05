@@ -52,6 +52,6 @@ cmake*
 *.blg
 *.log
 *.out
-*.pdf
+Report.pdf
 *.gz
 *.toc
