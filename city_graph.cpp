@@ -139,8 +139,8 @@ void CityGraph::init_cities() {
  * @brief Initialize the graph.
  * 
  * Read the data from file.
- * Data format: <start time(by hours)> <duration(by hours)> <price><end
- * of line> For example:
+ * Data format: start time(by hours) duration(by hours) price end
+ * of line For example:
  *  D21 0 Beijing Jilin 7 8 286
  * The cities appear in the file will be convert to integer automatically.
  * Converting between json and the format described above is handled by a
@@ -262,7 +262,6 @@ int CityGraph::compute_time(const vector<int> &city_seq, const Traveller &t,
  * 
  * @param city_seq The middle city sequence, often provided by the SA algorithm
  * @param t The traveller
- * @param begin_time Start time of the plan
  * @return int The cheapest price of the given middle city sequence
  */
 int CityGraph::compute_price(const vector<int> &city_seq,
