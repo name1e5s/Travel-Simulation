@@ -17,7 +17,7 @@ ApplicationWindow {
     Material.theme: Material.Light
     Material.accent: Material.Teal
 
-    StackView {
+    MainPage{
         id: stackView
         focus: true
         anchors.fill: parent
@@ -51,9 +51,5 @@ ApplicationWindow {
         id: popupClose
         interval: 2000
         onTriggered: popup.close()
-    }
-
-    Component.onCompleted: {
-        stackView.push("qrc:/ui/ui/MainPage.qml")
     }
 }

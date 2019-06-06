@@ -95,6 +95,7 @@
 
 \chapter{总体设计}
 
+\section{模块设计}
 该程序主体部分主要分为算法，图形界面，中间层三个模块。爬虫部分分为两个模块，分别处理来自于 12306 以及携程网的数据。因为爬虫部分过于简单，在此仅仅介绍主体部分的设计，以下是详细介绍。
 
 主体部分的包含关系见图~\ref{main_cpp}~。其中的 \textbf{main.cpp} 是程序的入口点，Qt 的初始化以及文件的载入都在此处进行；\textbf{graph\_handler.h} 以及与之对应的 .cpp 文件则是算法层与图形界面的交互层，在这里算法层提供的接口被包装为 QML 可以调用的函数以及 Qt 的信号和槽；\textbf{city\_graph.h} 以及与之对应的 .cpp 文件是算法部分，在这里实现了三种策略的算法。
@@ -116,6 +117,29 @@
  \end{figure}
 
 主体部分的图形界面使用 Qt 实现，通过对 QML 的使用，我们很好地将前后端进行了分离，两者之间仅通过中间层以及信号和槽的方式进行必要的交互。
+
+\section{数据结构设计}
+
+我们使用的数据结构主要由图~\ref{ds_all}~中的几个类构成。每个类的声明见附录。以下是各个类的作用：
+
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.5\textwidth]{ds_all.png}
+	\caption{数据结构概览}
+	\label{ds_all}
+\end{figure}
+
+\paragraph{Transport} 图的边，额外记录了行程的详细信息。
+
+\paragraph{City} 图的点，额外记录的城市的详细信息。
+
+\paragraph{CityGraph} 在此保存了整个图的信息，同时该类内还记录的预先计算好的最优解以供模拟退火算法使用。
+
+\paragraph{Traveller} 在此保存了用户输入的请求，计算的结果最后也会被输出到该类内。
+
+\paragraph{PlanResult} 转化后的规划结果，用以日志输出。
+
+\paragraph{GraphHandler} 算法部分与图形界面交互的中间层。
 
 \chapter{算法实现}
 
@@ -222,12 +246,12 @@ static inline double accept_rate(const int &new_energy, const int &old_energy, c
 
 图形界面部分使用 Qt 的 QML 进行实现。QML 是一种多范式语言，其能使对象能够根据其属性以及如何关联和响应其他对象的更改来定义对象。与纯粹的命令式代码不同，属性和行为的变化通过一系列逐步处理的语句表达。QML 的声明性语法将属性和行为更改直接集成到单个对象的定义中，这些属性定义可以包含必要的代码，在情况复杂的自定义应用程序行为是必要的。其语法类似 CSS，适用于描述复杂的界面关系，辅以 C++ 可以快速实现出界面好看的应用程序。
 
-该软件的界面风格来源于\href{https://www.google.com/design/spec/material-design/introduction.html}{Google Material Design Guidelines}，见图~\ref{gui}~。共分为两大部分，左侧为完整的可以任意缩放的地图\footnote{数据来自\href{https://www.openstreetmap.org}{OpenStreetMap}，在此表示衷心的感谢}，规划后的路径会以红线的形式显示在地图上面；右侧是控制部分，用户的输入以及日志的输出都在这里进行。为了优化触屏用户的体验，控制栏尽可能地减少了用户自己输入的部分，只有日期、离开时间以及时限需要自己手动输入，其余部分仅需要滑动以及点选既可。
+该软件的界面风格来源于 \href{https://www.google.com/design/spec/material-design/introduction.html}{Google Material Design Guidelines}，见图~\ref{gui}~。共分为两大部分，左侧为完整的可以任意缩放的地图\footnote{数据来自 \href{https://www.openstreetmap.org}{OpenStreetMap}，在此表示衷心的感谢}，规划后的路径会以红线的形式显示在地图上面；右侧是控制部分，用户的输入以及日志的输出都在这里进行。为了优化触屏用户的体验，控制栏尽可能地减少了用户自己输入的部分，只有日期、离开时间以及时限需要自己手动输入，其余部分仅需要滑动以及点选既可。
 
 \begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=1\textwidth]{gui.png}
-	\caption{主体部分的包含关系}
+	\caption{图形界面}
 	\label{gui}
 \end{figure}
 
@@ -245,9 +269,9 @@ static inline double accept_rate(const int &new_energy, const int &old_energy, c
 目标城市: LS
 策略类型: 1
 必经城市:
-SJZ
-WH
-GY
+	SJZ
+	WH
+	GY
 ================================
 结果概要
 开始时间: 6
@@ -363,10 +387,269 @@ def get_flight_prices(site_info, time_info):
 		return []
 \end{lstlisting}
 
-为了加快爬取速度以及防止被限制，我们在这里使用公开的 IP 代理信息搭建了代理池，最终在十分钟内爬取了 31 个城市间的飞机信息共 930 条。
+为了加快爬取速度以及防止被限制，我们在这里使用公开的 IP 代理信息搭建了代理池，最终在十分钟内爬取了 31 个城市间的飞机信息共 9300 条。
 
-\chapter{测试与分析}
+\chapter{运行状况与分析}
+我们选用的数据集规模为：\textbf{31}个城市，\textbf{3096}条路径。
+
+\section{路径规划}
+测试路径规划时，我们选用[北京 $\to$ 拉萨]途径[长沙、南宁]这一计划进行规划，各个规划结果如下：
+
+\begin{itemize}
+	\item \textbf{价格最低}\ [T145,T289,K315,T289,K654,K543,Z323]
+	\item \textbf{时间最短}\ [CA1835,FM9399,ZH9557,CA3685,D9485,TV9868]
+	\item \textbf{带时限的价格最低 - 时限 28, 开始时间 12 时}\newline [CZ3128,CZ3130,D3634,ZH3886,3U8936,CZ8165]
+\end{itemize}
+
+以上各个规划均为即时返回结果($t < 100ms$)，可以认为我们的算法运行速度在解决该问题时的耗时时可以接受的。
+
+\section{模拟旅行}
+
+\textbf{TODO}
+
+\section{错误处理}
+当用户输入错误的数据时，会弹出相应的信息提示出错，详见图形界面部分。
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=1\textwidth]{exception.png}
+	\caption{出错信息}
+	\label{error}
+\end{figure}
 
 \chapter{总结}
+
+\section{程序评价}
+经过以上的算法性能测试以及对图形界面的描述，我们认为我们的程序如下：
+
+\begin{enumerate}
+	\item \textbf{数据量大}\ 我们使用了自己从知名票务网站上获取的数据，数据规模远超任务要求(10城市，约百条数据)，如此巨大的数据规模使得直接套用算法几乎是不可能在可以接受的时间内得出较好的结果的。
+	\item \textbf{算法快速}\ 我们使用了模拟退火以及预处理相结合的方式。可以在很短的时间内给出近似最优解(甚至往往就是最优解)，保证了用户体验。
+	\item \textbf{界面美观}\ 我们使用了 Qt 来实现我们的图形界面。通过 Qt 已有的模块以及其信号与槽机制，我们实现了一套简洁美观且使用的图形界面。
+	\item \textbf{跨平台性}\ 得益于 Qt 以及 GCC 的跨平台特性，我们的程序可以很好的在多个平台下完美运行。
+\end{enumerate}
+
+当然，因为时间有限等原因，我们的程序还有如下不足，如果日后时间足够，会考虑进行改进：
+
+\begin{enumerate}
+	\item \textbf{算法仍可改进}\ 第三问我们使用的有界 DFS 在某些极端情况下运行时间会高达 30 s，推测是剪枝策略依然不够完善。
+	\item \textbf{无用户登录功能}\ 考虑到开发的方便，我们并未实现用户登录的功能。目前仍是直接打开程序即可直接使用。
+\end{enumerate}
+
+\appendix
+\chapter{数据结构定义}
+
+\begin{lstlisting}[language=C++,caption={Transport 的定义},captionpos=b]
+// Define the type of the trips.
+typedef enum { TYPE_TRAIN, TYPE_FLIGHT } transport_t;
+// Define users' requests type.
+typedef enum { TYPE_CHEAP, TYPE_FAST, TYPE_CHEAP_LIMITED } planning_t;
+
+// Record the basic information of a public transport.
+// Usually used as an edge of the adjacent list in out graph.
+struct Transport {
+	string tran_name;
+	transport_t tran_type;
+	int source_city, dest_city;
+	// Note: in our system, we use hours.
+	int start_time, duration;
+	// All integer price, "xxx.5" will be "xxx".
+	int price;
+
+	Transport *next_transport;
+};
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++,caption={City 以及 PlanResult 的定义},captionpos=b]
+typedef enum { ROUTE, CITY } result_t;
+
+struct ResultNode {
+	int beginHour;
+	result_t resultType;
+	// For CITY
+	int waitCityIndex;
+	// For ROUTE
+	Transport transport;
+};
+
+struct PlanResult {
+	int startHour;
+	vector<ResultNode> result;
+};
+
+// Record the city name and transports start from
+// this city. Usually as a vertex of the graph.
+struct City {
+	string city_name;
+	Transport *first_transport;
+};
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++,caption={Traveller 的定义},captionpos=b]
+// Store user's request and our results, the
+// simulation is also handled by this struct.
+// Also some temp variable is stored here.
+struct Traveller {
+	planning_t plan_type;
+	int source_city_index, dest_city_index;
+	int current_city_index;
+	vector<int> middle_city_index;
+	int time_limit;
+	int leave_time; // For TYPE_CHEAP_LIMITED
+	vector<Transport> plan_result;
+	int time_all, price_all;
+};
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++,caption={CityGraph 的定义},captionpos=b]
+// The City Graph. Records ALL the useful data.
+class CityGraph {
+public:
+	CityGraph();
+	~CityGraph();
+	void get_route(Traveller &);
+	int compute_price(const vector<Transport> &);
+	int compute_time(const vector<Transport> &, int);
+	map<int, string> index_city;
+	map<string, int> city_index;
+
+private:
+	void init(const char *path = "../Travel-Simulation/edges.dat");
+	void init_cities();
+	void add_edge(string, transport_t, int, int, int, int, int);
+	int find_city(const string &);
+	int compute_price(const vector<int> &, const Traveller &) const;
+	int compute_time(const vector<int> &, const Traveller &t, int) const;
+	int compute_expected_price(const Traveller &t);
+	int compute_expected_time(Traveller &t, int begin_time);
+	int pick_tran(int, const Transport *) const;
+	void floyd();
+	void spfa();
+
+	vector<int> simulated_annealing(const double, const Traveller &);
+	vector<int> simulated_annealing(const double, const int, const Traveller &);
+
+	City city[MAX_VERT];
+	int city_num;
+
+	// To find the cheapest route.
+	// In our program, the cheapest route between
+	// ANY two cities will be pre-generated by FLOYD
+	// algorithm. Obviously, the time complexity will be
+	// $O(v^3)$($v$ for vertex).
+	int cheapest_price[MAX_VERT][MAX_VERT];
+	vector<Transport> cheapest_route[MAX_VERT][MAX_VERT];
+	vector<Transport> get_cheapest_route(Traveller &, const vector<int> &);
+	vector<Transport> get_cheapest_route(Traveller &);
+
+	// To find the most fast route.
+	// In our program, the most fast route bewteen ANY
+	// two city will be pre-generated by SPFA algorithm,
+	// which time complexity is $O(Ce)$($e$ for edge).
+	// The end time fastest_time may be larger than 23,
+	// because the journey may take more than one day.
+	int fastest_time[MAX_VERT][MAX_VERT][24];
+	vector<Transport> fastest_route[MAX_VERT][MAX_VERT][24];
+	vector<Transport> get_fastest_route(Traveller &, const vector<int> &, int);
+	vector<Transport> get_fastest_route(Traveller &);
+
+	int min_cost;
+	int best_route_time;
+	vector<Transport> best_route, curr_route;
+	void dfs(Traveller &, int, int, int, int);
+};
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++,caption={GraphHandler 的定义},captionpos=b]
+class GraphHandler : public QObject {
+	Q_OBJECT
+	Q_PROPERTY(int beginYear READ beginYear WRITE setBeginYear)
+	Q_PROPERTY(int beginMonth READ beginMonth WRITE setBeginMonth)
+	Q_PROPERTY(int beginDate READ beginDate WRITE setBeginDate)
+	Q_PROPERTY(int sourceCity READ sourceCity WRITE setSourceCity)
+	Q_PROPERTY(int destCity READ destCity WRITE setDestCity)
+	Q_PROPERTY(int planType READ planType WRITE setPlanType)
+	Q_PROPERTY(int leaveTime READ leaveTime WRITE setLeaveTime)
+	Q_PROPERTY(int timeLimit READ timeLimit WRITE setTimeLimit)
+	Q_PROPERTY(QVector<int> middleCity READ middleCity WRITE setMiddleCity)
+	Q_PROPERTY(QVector<int> citySequence READ citySequence WRITE setCitySequence)
+	Q_PROPERTY(QVector<QString> tranName READ tranName WRITE setTranName)
+	Q_PROPERTY(
+	int totalTime READ totalTime WRITE setTotalTime NOTIFY totalTimeChanged)
+	Q_PROPERTY(int totalPrice READ totalPrice WRITE setTotalPrice NOTIFY
+	totalPriceChanged)
+
+public:
+	explicit GraphHandler(QObject *parent = nullptr);
+
+	Q_INVOKABLE void generateResult();
+
+	Q_INVOKABLE void appendMiddleCity(int value);
+	Q_INVOKABLE void clearMiddleCity();
+	Q_INVOKABLE void runSimulation();
+	Q_INVOKABLE void saveLog();
+	Q_INVOKABLE void receiveNewLog(QString string);
+	int beginYear() const;
+	void setBeginYear(int beginYear);
+
+	int beginMonth() const;
+	void setBeginMonth(int beginMonth);
+
+	int beginDate() const;
+	void setBeginDate(int beginDate);
+
+	QVector<int> middleCity() const;
+	void setMiddleCity(const QVector<int> &middleCity);
+
+	int leaveTime() const;
+	void setLeaveTime(int leaveTime);
+
+	int timeLimit() const;
+	void setTimeLimit(int timeLimit);
+
+	int planType() const;
+	void setPlanType(int planType);
+
+	QVector<int> citySequence() const;
+	void setCitySequence(const QVector<int> &citySequence);
+
+	int sourceCity() const;
+	void setSourceCity(int sourceCity);
+
+	int destCity() const;
+	void setDestCity(int destCity);
+
+	QVector<QString> tranName() const;
+	void setTranName(const QVector<QString> &tranName);
+
+	int totalTime() const;
+	void setTotalTime(int totalTime);
+
+	int totalPrice() const;
+	void setTotalPrice(int totalPrice);
+
+signals:
+	void totalTimeChanged();
+	void totalPriceChanged();
+	void simulationDone();
+	void logUpdated(QString logInfo, int src_1, int src_2, int type);
+
+public slots:
+	void printNewLog();
+
+private:
+	void generateCitySequence();
+	void generateTotalTime();
+	void generateTotalPrice();
+	void generatePlanResult();
+	int m_beginYear, m_beginMonth, m_beginDate;
+	int m_totalTime, m_totalPrice;
+	CityGraph m_cityGraph;
+	Traveller m_traveller;
+	PlanResult m_planResult;
+	QTimer m_simulateTimer;
+	QVector<int> m_citySequence;
+	QVector<QString> m_tranName;
+};
+\end{lstlisting}
 
 \end{document}

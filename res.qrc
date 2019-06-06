@@ -3,5 +3,9 @@
         <file>ui/MainWindow.qml</file>
         <file>ui/MainPage.qml</file>
         <file>ui/fontawesome.ttf</file>
+        <file>ui/bus.png</file>
+        <file>ui/plane.png</file>
+        <file>ui/train.png</file>
+        <file>ui/TransportIcon.qml</file>
     </qresource>
 </RCC>

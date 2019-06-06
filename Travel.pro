@@ -1,12 +1,13 @@
 TEMPLATE = app
 
-QT += qml quick quickcontrols2
+QT += qml quick quickcontrols2 positioning
 
 CONFIG += c++11
 
 SOURCES += main.cpp \
     city_graph.cpp \
-    graph_handler.cpp
+    graph_handler.cpp \
+    transcontroller.cpp
 
 RESOURCES += \  
     res.qrc
@@ -19,7 +20,8 @@ DISTFILES += \
 
 HEADERS += \ 
     city_graph.h \
-    graph_handler.h
+    graph_handler.h \
+    transcontroller.h
 
 # For GNU Compiler Collection.
 *-g++* {

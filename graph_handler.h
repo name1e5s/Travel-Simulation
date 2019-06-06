@@ -23,10 +23,9 @@ class GraphHandler : public QObject {
       int totalTime READ totalTime WRITE setTotalTime NOTIFY totalTimeChanged)
   Q_PROPERTY(int totalPrice READ totalPrice WRITE setTotalPrice NOTIFY
                  totalPriceChanged)
-
+  Q_PROPERTY(QVector<int> timeAndTrans READ timeAndTrans WRITE setTimeAndTrans)
 public:
   explicit GraphHandler(QObject *parent = nullptr);
-
   Q_INVOKABLE void generateResult();
 
   Q_INVOKABLE void appendMiddleCity(int value);
@@ -34,6 +33,8 @@ public:
   Q_INVOKABLE void runSimulation();
   Q_INVOKABLE void saveLog();
   Q_INVOKABLE void receiveNewLog(QString string);
+  Q_INVOKABLE void getTimeAndTrans();
+
   int beginYear() const;
   void setBeginYear(int beginYear);
 
@@ -73,6 +74,9 @@ public:
   int totalPrice() const;
   void setTotalPrice(int totalPrice);
 
+  QVector<int> timeAndTrans() const;
+  void setTimeAndTrans(const QVector<int> &timeAndTrans);
+
 signals:
   void totalTimeChanged();
   void totalPriceChanged();
@@ -95,6 +99,7 @@ private:
   QTimer m_simulateTimer;
   QVector<int> m_citySequence;
   QVector<QString> m_tranName;
+  QVector<int> m_timeAndTrans;
 };
 
 #endif // GRAPH_HANDLER_H

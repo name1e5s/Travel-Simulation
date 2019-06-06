@@ -15,6 +15,15 @@ Page {
     height: parent.height
 
     property int kount: 0
+    property var positions: [QtPositioning.coordinate(
+            39.929986, 116.395645), QtPositioning.coordinate(39.125595, 117.190186), QtPositioning.coordinate(31.231707, 121.472641), QtPositioning.coordinate(29.533155, 106.504959), QtPositioning.coordinate(
+            38.045475, 114.502464), QtPositioning.coordinate(37.857014, 112.549248), QtPositioning.coordinate(34.757977, 113.665413), QtPositioning.coordinate(28.19409, 112.982277), QtPositioning.coordinate(
+            30.584354, 114.298569), QtPositioning.coordinate(45.756966, 126.642464), QtPositioning.coordinate(43.886841, 125.324501), QtPositioning.coordinate(41.796768, 123.429092), QtPositioning.coordinate(
+            30.659462, 104.065735), QtPositioning.coordinate(25.040609, 102.71225), QtPositioning.coordinate(26.578342, 106.713478), QtPositioning.coordinate(34.263161, 108.948021), QtPositioning.coordinate(
+            36.061380, 103.834170), QtPositioning.coordinate(23.125177, 113.28064), QtPositioning.coordinate(22.82402, 108.320007), QtPositioning.coordinate(32.041546, 118.76741), QtPositioning.coordinate(
+            30.287458, 120.15358), QtPositioning.coordinate(26.075302, 119.306236), QtPositioning.coordinate(36.675808, 117.000923), QtPositioning.coordinate(28.676493, 115.892151), QtPositioning.coordinate(
+            31.861191, 117.283043), QtPositioning.coordinate(40.841490, 111.751990), QtPositioning.coordinate(29.644150, 91.11450), QtPositioning.coordinate(43.826630, 87.616880), QtPositioning.coordinate(
+            38.486440, 106.232480), QtPositioning.coordinate(36.617290, 101.777820), QtPositioning.coordinate(20.044220, 110.199890)]
 
     // Common List Model for ComboBox
     ListModel {
@@ -168,6 +177,79 @@ Page {
                 line.color: 'red'
                 path: []
             }
+
+            TransportIcon {
+                visible: true
+                id: transportIcon
+                coordinate: transController.position
+
+                property int transTime
+
+                SequentialAnimation {
+                    id: transAnim
+                    property real rotationDirection: 0
+
+                    NumberAnimation {
+                        target: transportIcon
+                        property: "bearing"
+                        duration: 1000
+                        easing.type: Easing.InOutQuad
+                        to: transAnim.rotationDirection
+                    }
+
+                    CoordinateAnimation {
+                        id: coordinateAnimation
+                        duration: transportIcon.transTime
+                        target: transController
+                        property: "position"
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+            }
+
+            Timer {
+                id: animTimer
+                interval: 5000
+                repeat: true
+                triggeredOnStart: true
+
+                property int currentTime
+                property int i: 0
+
+                onTriggered: {
+                    currentTime++
+                    currentTime %= 24
+                    if (i < graphHandler.citySequence.length - 1
+                            && currentTime === graphHandler.timeAndTrans[3 * i]) {
+                        if (graphHandler.timeAndTrans[3 * i + 1] === 0) {
+                            transportIcon.transTime = 3000 - 2000
+                        } else {
+                            transportIcon.transTime
+                                    = graphHandler.timeAndTrans[3 * i + 1] * 5000 - 2000
+                        }
+                        transportIcon.transName = graphHandler.tranName[i]
+
+                        if (graphHandler.timeAndTrans[3 * i + 2] === 0) {
+                            transportIcon.transImage = "qrc:/ui/ui/train.png"
+                        } else if (graphHandler.timeAndTrans[3 * i + 2] === 1) {
+                            transportIcon.transImage = "qrc:/ui/ui/plane.png"
+                        } else if (graphHandler.timeAndTrans[3 * i + 2] === 2) {
+                            transportIcon.transImage = "qrc:/ui/ui/bus.png"
+                        }
+
+                        transController.position = positions[graphHandler.citySequence[i]]
+                        coordinateAnimation.from = positions[graphHandler.citySequence[i]]
+                        coordinateAnimation.to = positions[graphHandler.citySequence[i + 1]]
+                        transAnim.rotationDirection = transController.position.azimuthTo(
+                                    coordinateAnimation.to)
+
+                        transAnim.start()
+                        i++
+                    } else if (i === graphHandler.citySequence.length - 1) {
+                        animTimer.stop()
+                    }
+                }
+            }
         }
 
         ColumnLayout {
@@ -274,8 +356,8 @@ Page {
                 Component.onCompleted: {
                     for (var i = 0; i < 31; i++) {
                         checkmodel.append({
-                                              name: cityList.get(i).text,
-                                              value: false
+                                              "name": cityList.get(i).text,
+                                              "value": false
                                           })
                     }
                 }
@@ -414,6 +496,7 @@ Page {
                     }
                 }
 
+
                 Button {
                     id: runSimuButton
                     width: parent.width * 0.2
@@ -430,6 +513,8 @@ Page {
                         runPlanButton.enabled = false
                         saveLogButton.enabled = false
                         graphHandler.runSimulation()
+
+                        runAnim()
                     }
                 }
 
@@ -554,12 +639,9 @@ Page {
                 graphHandler.appendMiddleCity(vn)
             }
         }
-        console.log(graphHandler.middleCity)
 
         graphHandler.generateResult()
-        console.log(graphHandler.citySequence)
         console.log(graphHandler.tranName)
-        console.log(graphHandler.citySequence.length)
         updateRoute()
     }
 
@@ -590,6 +672,13 @@ Page {
                 kount++
             }
         }
-        console.log(kount)
+    }
+
+    function runAnim() {
+        graphHandler.getTimeAndTrans()
+
+        animTimer.currentTime = graphHandler.timeAndTrans[0] - 1
+        animTimer.i = 0
+        animTimer.start()
     }
 }

@@ -11,7 +11,7 @@ static QVector<QString> logFile;
 
 GraphHandler::GraphHandler(QObject *parent) : QObject(parent), m_cityGraph() {
   m_traveller.plan_type = TYPE_CHEAP;
-  m_simulateTimer.setInterval(1000);
+  m_simulateTimer.setInterval(5000);
   m_simulateTimer.setSingleShot(false);
   QObject::connect(&m_simulateTimer, &QTimer::timeout, this,
                    &GraphHandler::printNewLog);
@@ -267,7 +267,7 @@ void GraphHandler::printNewLog() {
                        QString::number(currentTime % 24) + "时 " + "滞留于 %1";
   if (currentTime == m_planResult.startHour + m_totalTime) {
     logUpdated("于 " + realLogDate.toString("yyyy-MM-dd") + " " +
-                   QString::number(currentTime % 24) + "时到达终点 %1",
+                   QString::number(currentTime % 24) + "时 到达终点 %1",
                m_planResult.result.back().transport.dest_city, 0, 1);
     m_simulateTimer.stop();
     emit simulationDone();
@@ -289,6 +289,7 @@ void GraphHandler::printNewLog() {
 
 void GraphHandler::runSimulation() {
   generatePlanResult();
+  printNewLog();
   m_simulateTimer.start();
 }
 
@@ -305,3 +306,15 @@ void GraphHandler::saveLog() {
   streamFileOut.flush();
   fileOut.close();
 }
+
+void GraphHandler::getTimeAndTrans() {
+    for(uint i = 0; i < uint(m_tranName.size()); i++){
+        m_timeAndTrans.append(m_traveller.plan_result[i].start_time);
+        m_timeAndTrans.append(m_traveller.plan_result[i].duration);
+        m_timeAndTrans.append(m_traveller.plan_result[i].tran_type);
+    }
+}
+
+QVector<int> GraphHandler::timeAndTrans() const { return m_timeAndTrans; }
+
+void GraphHandler::setTimeAndTrans(const QVector<int> &timeAndTrans) {  }
