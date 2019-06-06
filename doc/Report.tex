@@ -31,7 +31,7 @@
 }
 
 \begin{document}
-\maketitle
+%\maketitle
 \tableofcontents
 \mainmatter
 \hypersetup{pageanchor=true}
@@ -231,6 +231,51 @@ static inline double accept_rate(const int &new_energy, const int &old_energy, c
 	\label{gui}
 \end{figure}
 
+\chapter{日志模块}
+日志模块集成于中间层内，其核心部分为一个定时器以及与之发出的 \textbf{TimeOut} 信号相连的槽函数 \textbf{GraphHandler::printNewLog
+}。除此之外，该模块还包含一个初始化函数 \textbf{GraphHandler::generatePlanResult}，用于在按下``模拟''按钮时实时根据\textbf{GraphHandler::m\_traveller::plan\_result}这一向量的内保存的结果生成日志序列。\textbf{GraphHandler::printNewLog} 则会根据该序列产出日志。日志在打印在图形界面相应部分内的同时会被保存到一个变量内，当用户按下``保存''按钮时，该变量的内容会被输出到日志文件内，示例日志文件如下：
+
+\begin{lstlisting}
+================================
+2019-06-06 09:56:00.736    
+(C) 2019 Travel-Simulation Group
+================================
+用户输入
+起始城市: BJ
+目标城市: LS
+策略类型: 1
+必经城市:
+SJZ
+WH
+GY
+================================
+结果概要
+开始时间: 6
+耗时: 17
+价格: 5701
+路线数目: 9
+================================
+详细日志
+2019-10-01 6时 G427 次火车 从 北京 到 石家庄
+2019-10-01 7时 NS3513 次航班 从 石家庄 到 贵阳
+2019-10-01 8时 NS3513 次航班 从 石家庄 到 贵阳
+2019-10-01 9时 滞留于 贵阳
+2019-10-01 10时 CZ3424 次航班 从 贵阳 到 武汉
+2019-10-01 11时 G2044 次火车 从 武汉 到 郑州
+2019-10-01 12时 G2044 次火车 从 武汉 到 郑州
+2019-10-01 13时 G1294 次火车 从 郑州 到 石家庄
+2019-10-01 14时 G69 次火车 从 石家庄 到 郑州
+2019-10-01 15时 G517 次火车 从 郑州 到 武汉
+2019-10-01 16时 MU5400 次航班 从 武汉 到 太原
+2019-10-01 17时 滞留于 太原
+2019-10-01 18时 CA3958 次航班 从 太原 到 拉萨
+2019-10-01 19时 CA3958 次航班 从 太原 到 拉萨
+2019-10-01 20时 CA3958 次航班 从 太原 到 拉萨
+2019-10-01 21时 CA3958 次航班 从 太原 到 拉萨
+2019-10-01 22时 CA3958 次航班 从 太原 到 拉萨
+于 2019-10-01 23时到达终点 拉萨
+\end{lstlisting}
+
 \chapter{爬虫部分}
 该系统的爬虫部分主要采用 Python 的 requests 库实现，辅以代理池等技术保证不被网站的反爬虫技术限制。最终在 12306 上爬取到车票信息 14655 条，在携程网上爬取机票信息 930 条。该部分的源码现已开源，网址为 \href{https://github.com/kuso-kodo/kuso\_12306}{https://github.com/kuso-kodo/kuso\_12306}。
 
@@ -319,7 +364,6 @@ def get_flight_prices(site_info, time_info):
 \end{lstlisting}
 
 为了加快爬取速度以及防止被限制，我们在这里使用公开的 IP 代理信息搭建了代理池，最终在十分钟内爬取了 31 个城市间的飞机信息共 930 条。
-\chapter{日志模块}
 
 \chapter{测试与分析}
 

@@ -10,6 +10,7 @@ using std::shuffle;
 #define LOWTEMP (1.00001)
 
 CityGraph::CityGraph() {
+  this->init_cities();
   this->init();
   this->floyd();
   this->spfa();
@@ -67,6 +68,7 @@ void CityGraph::add_edge(string name, transport_t type, int source, int dest,
 }
 
 void CityGraph::init_cities() {
+  city_num = 0;
   this->find_city("BJ");
   this->find_city("TJ");
   this->find_city("SH");
@@ -109,7 +111,6 @@ void CityGraph::init_cities() {
 // python script.
 void CityGraph::init(const char *path) {
   std::ifstream input(path);
-  city_num = 0;
 
   for (int i = 0; i < MAX_VERT; i++) {
     for (int j = 0; j < MAX_VERT; j++) {
