@@ -55,3 +55,6 @@ cmake*
 Report.pdf
 *.gz
 *.toc
+
+# vscode
+.vscode/

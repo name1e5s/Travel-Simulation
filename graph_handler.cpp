@@ -4,11 +4,16 @@
 #include <QDebug>
 #include <QFile>
 
-static int currentTime;
-static int log_i;
-static QDate logDate;
-static QVector<QString> logFile;
+static int currentTime; ///< Stores current time for logger
+static int log_i;       ///< Stores current status for logger
+static QDate logDate;   ///< Stores start date for logger
+static QVector<QString> logFile; ///< Store all log to be printed
 
+/**
+ * @brief Construct a new Graph Handler:: Graph Handler object
+ * 
+ * @param parent Required by Qt.
+ */
 GraphHandler::GraphHandler(QObject *parent) : QObject(parent), m_cityGraph() {
   m_traveller.plan_type = TYPE_CHEAP;
   m_simulateTimer.setInterval(5000);
@@ -16,6 +21,7 @@ GraphHandler::GraphHandler(QObject *parent) : QObject(parent), m_cityGraph() {
   QObject::connect(&m_simulateTimer, &QTimer::timeout, this,
                    &GraphHandler::printNewLog);
 }
+
 
 int GraphHandler::beginYear() const { return m_beginYear; }
 
@@ -32,6 +38,7 @@ void GraphHandler::setBeginDate(int beginDate) { m_beginDate = beginDate; }
 QVector<int> GraphHandler::middleCity() const {
   return QVector<int>::fromStdVector(m_traveller.middle_city_index);
 }
+
 void GraphHandler::setMiddleCity(const QVector<int> &middleCity) {
   // DO NOT WRITE HERE
 }
@@ -89,6 +96,35 @@ void GraphHandler::setDestCity(int destCity) {
   m_traveller.dest_city_index = destCity;
 }
 
+int GraphHandler::totalPrice() const { return m_totalPrice; }
+
+void GraphHandler::setTotalPrice(int totalPrice) { m_totalPrice = totalPrice; }
+
+int GraphHandler::totalTime() const { return m_totalTime; }
+
+void GraphHandler::setTotalTime(int totalTime) { m_totalTime = totalTime; }
+
+QVector<QString> GraphHandler::tranName() const { return m_tranName; }
+
+void GraphHandler::setTranName(const QVector<QString> &tranName) {
+  m_tranName = tranName;
+}
+
+static QString getTranName(transport_t tran) {
+  if (tran == TYPE_TRAIN)
+    return "火车";
+  else
+    return "航班";
+}
+
+QVector<int> GraphHandler::timeAndTrans() const { return m_timeAndTrans; }
+
+void GraphHandler::setTimeAndTrans(const QVector<int> &timeAndTrans) {  }
+
+/**
+ * @brief Generate result for the given input.
+ * 
+ */
 void GraphHandler::generateResult() {
   m_cityGraph.get_route(m_traveller);
   generateCitySequence();
@@ -96,6 +132,10 @@ void GraphHandler::generateResult() {
   generateTotalTime();
 }
 
+/**
+ * @brief Generate city sequence for GUI
+ * 
+ */
 void GraphHandler::generateCitySequence() {
   m_citySequence.clear();
   m_tranName.clear();
@@ -108,11 +148,19 @@ void GraphHandler::generateCitySequence() {
   }
 }
 
+/**
+ * @brief Generate total price for GUI
+ * 
+ */
 void GraphHandler::generateTotalPrice() {
   m_totalPrice = m_cityGraph.compute_price(m_traveller.plan_result);
   emit totalPriceChanged();
 }
 
+/**
+ * @brief Generate total time for GUI
+ * 
+ */
 void GraphHandler::generateTotalTime() {
   switch (m_traveller.plan_type) {
   case TYPE_CHEAP:
@@ -130,6 +178,10 @@ void GraphHandler::generateTotalTime() {
   emit totalTimeChanged();
 }
 
+/**
+ * @brief Generate total time for GUI logger
+ * 
+ */
 void GraphHandler::generatePlanResult() {
   m_planResult.result.clear();
   if (m_traveller.plan_result.empty())
@@ -227,27 +279,10 @@ void GraphHandler::generatePlanResult() {
   }
 }
 
-int GraphHandler::totalPrice() const { return m_totalPrice; }
-
-void GraphHandler::setTotalPrice(int totalPrice) { m_totalPrice = totalPrice; }
-
-int GraphHandler::totalTime() const { return m_totalTime; }
-
-void GraphHandler::setTotalTime(int totalTime) { m_totalTime = totalTime; }
-
-QVector<QString> GraphHandler::tranName() const { return m_tranName; }
-
-void GraphHandler::setTranName(const QVector<QString> &tranName) {
-  m_tranName = tranName;
-}
-
-static QString getTranName(transport_t tran) {
-  if (tran == TYPE_TRAIN)
-    return "火车";
-  else
-    return "航班";
-}
-
+/**
+ * @brief Slot function, for genreating a new log.
+ * 
+ */
 void GraphHandler::printNewLog() {
 
   if (m_planResult.result.empty()) {
@@ -287,14 +322,29 @@ void GraphHandler::printNewLog() {
   }
 }
 
+/**
+ * @brief INVOKE function, called when
+ * Run Simulation Button is clicked.
+ * 
+ */
 void GraphHandler::runSimulation() {
   generatePlanResult();
   printNewLog();
   m_simulateTimer.start();
 }
 
+/**
+ * @brief Slot function, called when the logger at 
+ * GUI part prints a new log.
+ * 
+ * @param string 
+ */
 void GraphHandler::receiveNewLog(QString string) { logFile.push_back(string); }
 
+/**
+ * @brief Save log to a file.
+ * 
+ */
 void GraphHandler::saveLog() {
   QFile fileOut("./Travel-Simulation.log");
   fileOut.open(QIODevice::WriteOnly | QIODevice::Text);
@@ -307,6 +357,10 @@ void GraphHandler::saveLog() {
   fileOut.close();
 }
 
+/**
+ * @brief Generate result for animation.
+ * 
+ */
 void GraphHandler::getTimeAndTrans() {
     for(uint i = 0; i < uint(m_tranName.size()); i++){
         m_timeAndTrans.append(m_traveller.plan_result[i].start_time);
@@ -314,7 +368,3 @@ void GraphHandler::getTimeAndTrans() {
         m_timeAndTrans.append(m_traveller.plan_result[i].tran_type);
     }
 }
-
-QVector<int> GraphHandler::timeAndTrans() const { return m_timeAndTrans; }
-
-void GraphHandler::setTimeAndTrans(const QVector<int> &timeAndTrans) {  }

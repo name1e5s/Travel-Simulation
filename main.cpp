@@ -7,6 +7,13 @@
 #include <graph_handler.h>
 #include <transcontroller.h>
 
+/**
+ * @brief Entry point of the whole app.
+ * 
+ * @param argc 
+ * @param argv 
+ * @return int 
+ */
 int main(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
   QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));

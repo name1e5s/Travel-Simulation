@@ -12,13 +12,24 @@ using std::map;
 using std::string;
 using std::vector;
 
-// Define the type of the trips.
+/**
+ * @brief Define the type of the trips.
+ * 
+ */
 typedef enum { TYPE_TRAIN, TYPE_FLIGHT } transport_t;
-// Define users' requests type.
+
+/**
+ * @brief Define users' requests type.
+ * 
+ */
 typedef enum { TYPE_CHEAP, TYPE_FAST, TYPE_CHEAP_LIMITED } planning_t;
 
-// Record the basic information of a public transport.
-// Usually used as an edge of the adjacent list in out graph.
+
+/**
+ * @brief Record the basic information of a public transport.
+ * Usually used as an edge of the adjacent list in out graph.
+ * 
+ */
 struct Transport {
   Transport() {
     tran_name = "";
@@ -65,8 +76,16 @@ struct Transport {
   Transport *next_transport;
 };
 
+/**
+ * @brief Determine the result type
+ * 
+ */
 typedef enum { ROUTE, CITY } result_t;
 
+/**
+ * @brief Record the result begin hour and basic info.
+ * 
+ */
 struct ResultNode {
   int beginHour;
   result_t resultType;
@@ -76,21 +95,31 @@ struct ResultNode {
   Transport transport;
 };
 
+/**
+ * @brief Result for log.
+ * 
+ */
 struct PlanResult {
   int startHour;
   vector<ResultNode> result;
 };
 
-// Record the city name and transports start from
-// this city. Usually as a vertex of the graph.
+/**
+ * @brief Record the city name and transports start from
+ * this city. Usually as a vertex of the graph.
+ * 
+ */
 struct City {
   string city_name;
   Transport *first_transport;
 };
 
-// Store user's request and our results, the
-// simulation is also handled by this struct.
-// Also some temp variable is stored here.
+/**
+ * @brief  Store user's request and our results, the
+ * simulation is also handled by this struct.
+ * Also some temp variable is stored here.
+ * 
+ */
 struct Traveller {
   planning_t plan_type;
   int source_city_index, dest_city_index;
@@ -109,7 +138,10 @@ struct Traveller {
   }
 };
 
-// The City Graph. Records ALL the useful data.
+/**
+ * @brief The City Graph. Records ALL the useful data.
+ * 
+ */
 class CityGraph {
 public:
   CityGraph();
