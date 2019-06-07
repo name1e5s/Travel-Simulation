@@ -2,33 +2,25 @@
 
 /**
  * @brief Construct a new Trans Controller:: Trans Controller object
- * 
+ *
  */
-TransController::TransController()
-{
-    easingCurve.setType(QEasingCurve::InOutQuad);
-    easingCurve.setPeriod(ANIMATION_DURATION);
+TransController::TransController() {
+  easingCurve.setType(QEasingCurve::InOutQuad);
+  easingCurve.setPeriod(ANIMATION_DURATION);
 }
 
 /**
  * @brief Destroy the Trans Controller:: Trans Controller object
- * 
+ *
  */
-TransController::~TransController()
-{
+TransController::~TransController() {}
 
+void TransController::setPosition(const QGeoCoordinate &c) {
+  if (currentPosition == c)
+    return;
+
+  currentPosition = c;
+  emit positionChanged();
 }
 
-void TransController::setPosition(const QGeoCoordinate &c)
-{
-    if (currentPosition == c)
-            return;
-
-        currentPosition = c;
-        emit positionChanged();
-}
-
-QGeoCoordinate TransController::position() const
-{
-    return currentPosition;
-}
+QGeoCoordinate TransController::position() const { return currentPosition; }
