@@ -59,3 +59,8 @@ Report.pdf
 
 # vscode
 .vscode/
+
+# exe
+*.exe
+*.dll
+*.log

@@ -39,5 +39,7 @@ Component.prototype.createOperations = function()
     if (systemInfo.productType === "windows") {
         component.addOperation("CreateShortcut", "@TargetDir@/Travel.exe", "@StartMenuDir@/Travel.lnk",
             "workingDirectory=@TargetDir@", "iconPath=@TargetDir@/Travel.exe", "description=Open Travel Simulator");
+		component.addOperation("CreateShortcut", "@TargetDir@/Travel-Simulation.log", "@StartMenuDir@/Travel-Log.lnk",
+            "workingDirectory=@TargetDir@", "iconPath=@TargetDir@/Travel.exe", "description=Open Travel Simulator Log File");
     }
 }
