@@ -1,7 +1,12 @@
 ﻿#include <QDebug>
 #include <algorithm>
-#include <bits/stdc++.h>
+#include <deque>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <city_graph.h>
+#include <map>
+#include <random>
 
 using std::deque;
 using std::shuffle;
@@ -19,9 +24,13 @@ using std::shuffle;
  */
 CityGraph::CityGraph() {
   this->init_cities();
+  qDebug() << "Init cities done.";
   this->init();
+  qDebug() << "Init cities done.";
   this->floyd();
+  qDebug() << "Init cities done.";
   this->spfa();
+  qDebug() << "Init cities done.";
 }
 
 /**

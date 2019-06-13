@@ -1,6 +1,6 @@
 TEMPLATE = app
 
-QT += qml quick quickcontrols2 positioning
+QT += qml quick quickcontrols2 positioning location
 
 CONFIG += c++11
 
@@ -23,7 +23,13 @@ HEADERS += \
     graph_handler.h \
     transcontroller.h
 
+LIBS += -LD:\OpenSSL\lib -llibcrypto -llibssl
+
+win32:RC_ICONS += logo.ico
+
 # For GNU Compiler Collection.
 *-g++* {
     QMAKE_CXXFLAGS += -Ofast -frename-registers -fopenmp -D_GLIBCXX_PARALLEL -funroll-loops -malign-double -minline-all-stringops -ftree-parallelize-loops=8 -flto -fuse-linker-plugin
 }
+
+msvc:QMAKE_CXXFLAGS += -execution-charset:utf-8
