@@ -153,7 +153,7 @@ public:
   map<string, int> city_index;
 
 private:
-  void init(const char *path = "D:\\Projects\\Travel-Simulation\\edges.dat");
+  void init();
   void init_cities();
   void add_edge(string, transport_t, int, int, int, int, int);
   int find_city(const string &);

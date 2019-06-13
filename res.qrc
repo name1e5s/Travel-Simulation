@@ -8,4 +8,7 @@
         <file>ui/train.png</file>
         <file>ui/TransportIcon.qml</file>
     </qresource>
+    <qresource prefix="/res">
+        <file>edges.dat</file>
+    </qresource>
 </RCC>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>VC 运行时库</DisplayName>
+    <Description>该组件包含了程序运行必须的库，通常只有当您的 PC 中未安装 Visual Studio 2015 以上的版本时才需要安装</Description>
+    <Version>1.0.0-1</Version>
+    <ReleaseDate>2019-06-13</ReleaseDate>
+    <Default>false</Default>
+    <Script>installscript.qs</Script>
+</Package>

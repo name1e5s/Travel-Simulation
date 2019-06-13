@@ -1,7 +1,11 @@
 ﻿#include <QDebug>
+#include <QFile>
+#include <QIODevice>
+#include <QUrl>
 #include <algorithm>
 #include <deque>
 #include <fstream>
+#include <QTextStream>
 #include <iostream>
 #include <sstream>
 #include <city_graph.h>
@@ -23,14 +27,10 @@ using std::shuffle;
  * called.
  */
 CityGraph::CityGraph() {
-  this->init_cities();
-  qDebug() << "Init cities done.";
-  this->init();
-  qDebug() << "Init cities done.";
-  this->floyd();
-  qDebug() << "Init cities done.";
-  this->spfa();
-  qDebug() << "Init cities done.";
+    this->init_cities();
+    this->init();
+    this->floyd();
+    this->spfa();
 }
 
 /**
@@ -157,8 +157,11 @@ void CityGraph::init_cities() {
  * 
  * @param path File path
  */
-void CityGraph::init(const char *path) {
-  std::ifstream input(path);
+void CityGraph::init() {
+  QFile file(":/res/edges.dat");
+  file.open(QIODevice::ReadOnly | QIODevice::Text);
+  QTextStream in(&file);
+  in.setCodec("UTF-8");
 
   for (int i = 0; i < MAX_VERT; i++) {
     for (int j = 0; j < MAX_VERT; j++) {
@@ -178,8 +181,8 @@ void CityGraph::init(const char *path) {
     city[i].first_transport = nullptr;
   }
 
-  string getline;
-  while (std::getline(input, getline)) {
+  while (!in.atEnd()) {
+    std::string getline = in.readLine().toStdString();
     std::stringstream word(getline);
     string edge_name;
     int tran_type;

@@ -1,4 +1,4 @@
-\documentclass[lang=cn,blue]{elegantbook}
+\documentclass[lang=cn,blue,13pt]{elegantbook}
 \title{模拟旅行查询系统}
 \subtitle{课程实践报告}
 
@@ -13,6 +13,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{listings}
+
 \newfontfamily\courier{Courier New}
 \lstset{linewidth=1.1\textwidth,
 	numbers=left,
@@ -31,7 +32,7 @@
 }
 
 \begin{document}
-%\maketitle
+\maketitle
 \tableofcontents
 \mainmatter
 \hypersetup{pageanchor=true}
@@ -76,15 +77,20 @@
 \end{enumerate}
 
 \section{解决方案说明}
+
 在这一节内，我们对该系统使用的技术以及人员分工进行描述。
+
 \subsection{编程语言}
+
 该系统主体部分使用 C++ 进行开发，图形部分采用 Qt 框架以实现跨平台特性。爬虫部分使用 Python 的 requests 库进行开发。
+
 \subsection{人员分工}
 \begin{itemize}
 	\item \textbf{于海鑫}\ 算法实现以及爬虫部分
-	\item \textbf{王嘉茜}\ 图形界面
-	\item \textbf{田静悦}\ 日志模块
+	\item \textbf{王嘉茜}\ 图形界面以及动态模拟
+	\item \textbf{田静悦}\ 日志模块以及部分文档
 \end{itemize}
+
 \subsection{编程规范}
 \begin{itemize}
 	\item \textbf{C++}部分遵循 \href{http://www.nscscc.org/uploads/soft/170318/1-1F31P20H9.docxhttp://google.github.io/styleguide/cppguide}{Google C++ Style Guide}, 通过使用 clang 提供的工具包保证代码风格的一致性
@@ -255,50 +261,36 @@ static inline double accept_rate(const int &new_energy, const int &old_energy, c
 	\label{gui}
 \end{figure}
 
+\section{旅游过程的动态模拟}
+
+创建\textbf{TransController}类来控制交通工具图标的移动，同时为该类创建了一个\textbf{QGeoCoordinate}型的建\textbf{Position}属性，以此来控制交通工具图标的位置。在main函数中创建TransController类的对象\textbf{transController}，并将其注册为QML上下文属性，便于在 QML 内部对其进行调用。
+建\textbf{transportIcon}为自定义的一个\textbf{TransportIcon}组件(组件由TransportIcon.qml实现，类似C++的类)，由交通工具图标和右上角的车次文本框组成，而动画模拟旅游过程就是通过改变transportIcon的交通图标图片路径以及通过transController控制transportIcon位置来实现的。
+
+以下简述一下实现过程：
+
+当用户按下“模拟”按键，\textbf{GraphHandler::getTimeAndTrans()}会获取用户旅行规划中的每一趟的开始时间、乘坐时间以及使用的交通工具，并通过\textbf{GraphHandler::timeAndTrans()}函数传给transportIcon组件，与此同时，动画的定时器开始计时（由于 10s/时 太慢，我们采用了 5s/时 ）。每当定时器的当前时间与用户某趟旅程的开始时间相等时，transController便获取用户当前应该所处的位置（也是当前transportIcon应该所处的位置），transportIcon也会获取当前旅程的车次、起点位置以及终点位置，再结合原先获得的乘坐时间，完成该趟旅程的动画。与此同时，定时器一直在计时，当下一趟旅程开始时，将会重复上述过程，直到最后一趟旅程开始，定时器停止计时。至此，动态模拟完成，当用户再次按下“模拟”键时，将会再次呈现动画。
+
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.9\textwidth]{sim.png}
+	\caption{动态模拟}
+	\label{sim}
+\end{figure}
+
+\section{错误提示}
+
+我们的错误提示为 Qt 内部自带的 POP-UP 弹窗，我们通过设置一个计时器实现了出现两秒后自动消失的效果。当其他的函数发现出错时，会将该弹窗的提示标语更新，并调用该窗口的弹出函数。窗口弹出的同时，计时器自动开始计时，两秒后发送关闭信号。
+
 \chapter{日志模块}
 日志模块集成于中间层内，其核心部分为一个定时器以及与之发出的 \textbf{TimeOut} 信号相连的槽函数 \textbf{GraphHandler::printNewLog
-}。除此之外，该模块还包含一个初始化函数 \textbf{GraphHandler::generatePlanResult}，用于在按下``模拟''按钮时实时根据\textbf{GraphHandler::m\_traveller::plan\_result}这一向量的内保存的结果生成日志序列。\textbf{GraphHandler::printNewLog} 则会根据该序列产出日志。日志在打印在图形界面相应部分内的同时会被保存到一个变量内，当用户按下``保存''按钮时，该变量的内容会被输出到日志文件内，示例日志文件如下：
+}。除此之外，该模块还包含一个初始化函数 \textbf{GraphHandler::generatePlanResult}，用于在按下``模拟''按钮时实时根据\textbf{GraphHandler::m\_traveller::plan\_result}这一向量的内保存的结果生成日志序列。\textbf{GraphHandler::printNewLog} 则会根据该序列产出日志。日志在打印在图形界面相应部分内的同时会被保存到一个变量内，当用户按下``保存''按钮时，该变量的内容会被输出到日志文件内，示例日志文件见图~\ref{report}~。
 
-\begin{lstlisting}
-================================
-2019-06-06 09:56:00.736    
-(C) 2019 Travel-Simulation Group
-================================
-用户输入
-起始城市: BJ
-目标城市: LS
-策略类型: 1
-必经城市:
-	SJZ
-	WH
-	GY
-================================
-结果概要
-开始时间: 6
-耗时: 17
-价格: 5701
-路线数目: 9
-================================
-详细日志
-2019-10-01 6时 G427 次火车 从 北京 到 石家庄
-2019-10-01 7时 NS3513 次航班 从 石家庄 到 贵阳
-2019-10-01 8时 NS3513 次航班 从 石家庄 到 贵阳
-2019-10-01 9时 滞留于 贵阳
-2019-10-01 10时 CZ3424 次航班 从 贵阳 到 武汉
-2019-10-01 11时 G2044 次火车 从 武汉 到 郑州
-2019-10-01 12时 G2044 次火车 从 武汉 到 郑州
-2019-10-01 13时 G1294 次火车 从 郑州 到 石家庄
-2019-10-01 14时 G69 次火车 从 石家庄 到 郑州
-2019-10-01 15时 G517 次火车 从 郑州 到 武汉
-2019-10-01 16时 MU5400 次航班 从 武汉 到 太原
-2019-10-01 17时 滞留于 太原
-2019-10-01 18时 CA3958 次航班 从 太原 到 拉萨
-2019-10-01 19时 CA3958 次航班 从 太原 到 拉萨
-2019-10-01 20时 CA3958 次航班 从 太原 到 拉萨
-2019-10-01 21时 CA3958 次航班 从 太原 到 拉萨
-2019-10-01 22时 CA3958 次航班 从 太原 到 拉萨
-于 2019-10-01 23时到达终点 拉萨
-\end{lstlisting}
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.9\textwidth]{report.png}
+	\caption{规划报告}
+	\label{result}
+\end{figure}
 
 \chapter{爬虫部分}
 该系统的爬虫部分主要采用 Python 的 requests 库实现，辅以代理池等技术保证不被网站的反爬虫技术限制。最终在 12306 上爬取到车票信息 14655 条，在携程网上爬取机票信息 930 条。该部分的源码现已开源，网址为 \href{https://github.com/kuso-kodo/kuso\_12306}{https://github.com/kuso-kodo/kuso\_12306}。
@@ -318,7 +310,7 @@ static inline double accept_rate(const int &new_energy, const int &old_energy, c
 		purpose\_codes & 乘客类型 \\ \hline
 	\end{tabular}
 \end{center}
-需要注意的是站点需要使用内部电码来表示，获取内部电码的方式是访问 \href{https://kyfw.12306.cn/otn/resources/js/framework/station\_name.js}{https://kyfw.12306.cn/otn/resources/js/framework/station\_name.js} 获取形如``@bjb|北京北|VAP|beijingbei|bjb|0''的信息之后通过正则表达式获取所需信息。
+需要注意的是站点需要使用内部电码来表示，获取内部电码的方式是访问 \href{https://kyfw.12306.cn/otn/resources/js/framework/station\_name.js}{station\_name.js} 获取形如``@bjb|北京北|VAP|beijingbei|bjb|0''的信息之后通过正则表达式获取所需信息。
 访问该 API 返回的结果为 JSON，结果内包含了查询日期内全部车次的信息。使用恰当的方式提取即可。返回结果示例如下：
 \begin{lstlisting}[language={}]
 {"data":{"flag":"1","map":{"BJP":"北京","SHH":"上海"},"result":["X2r16oP8IGH94iXTfaiBVftWDflhurjVyMtLApUAqGtb%UMWvDzNbAPvs2JJgtpCsG2y5VUJ2l5mC%0AbxIfI7x4izoLOx2%2FQrCgmSw0FTE0HJRw34xqltxHR6QvsJs8ZzcVyUtiZ6O57m%2Btt%2BS7QUfVl23M%0AYkqXZBJdFwX3qw33jZUkU0PLe%2FYfzcinUaZk6VpcbaHLuYoflN4kdE6Vk%2BPrYGpwqehRkGoTElzS%0A8naAdzOg1VyR8vffGyFCZ%2B4F9ZbIMrm0Hm1cVV%2BA2RsOgIps8IwLambwpZ76GgZZRZj0O6%2B0TkGY%0AG8DGrhYOPKg%3D|预订|240000D70500|D705|BJP|SHH|BJP|SHH|21:21|09:20|11:59|Y|R3ArWiqJWSrjfblWAofOiX3%2Bo5Q7Ud8vVMTg1pnCJxohcTRTmikvHJ7nmlo%3D|20190530|3|P4|01|04|0|0||||有|||有||有||有||||O0J0O0I0|OJOI|0|0|null"]},"httpstatus":200,"messages":"","status":true}
@@ -405,13 +397,75 @@ def get_flight_prices(site_info, time_info):
 
 \section{模拟旅行}
 
-\textbf{TODO}
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=1\textwidth]{beforestart.png}
+	\caption{界面展示}
+	\label{beforestart}
+\end{figure}
+
+我们从下拉菜单里选定始发和终到城市，鼠标放在底部或顶部即可完成城市列表下滑和上移。并按指定格式输入出发日期。在途经城市列表勾选想经过的途经城市，此处我们的设计亮点为起止城市的选择框变灰不可选择，而且我们根据用户输入而调灰勾选框。选择策略类型后,点击\textbf{规划}按钮，系统会给出红线标识的所选城市间的路径。点击\textbf{模拟}按钮，每段路线会根据为其规划的交通工具而有相应的交通工具的图标沿红线移动，移动速度与系统模拟时间相配，并和实际速度成比例，用户能够直观的看出不同工具间的明显差异。同时，日志模块会输出不同时间段内旅客的状态信息。而当模拟完成时可以选择保存日志，方便日后查看。
+此次旅行模拟共有三种方案：\textbf{最低价格}，\textbf{最短时间}和\textbf{规定时间最少价格}。首先，我们对最低价格进行模拟。
+
+\begin{enumerate}
+	\item \textbf{最低价格}\ 我们选择[武汉 $\to$ 北京]途径 [天津、上海、重庆、石家庄、太原、郑州、成都]，出发时间为2019-06-25，策略为最低价格。点击\textbf{规划}按钮，结果如图~\ref{plan}~。
+	
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.8\textwidth]{plan.png}
+	\caption{最低价格-规划}
+	\label{plan}
+\end{figure}
+
+然后我们点击\textbf{模拟}按钮，会看到如图~\ref{simu}~，每条路径有相应的交通工具和用户状态的日志信息。
+
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.8\textwidth]{simulation.png}
+	\caption{最低价格-模拟}
+	\label{simu}
+\end{figure}
+
+	\item \textbf{最短时间}\ 我们选择[哈尔滨 $\to$ 昆明]途径剩余所有城市，出发时间为2019-07-01，策略为最短时间。点击\textbf{规划}按钮，结果见图~\ref{fastest}~。
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.8\textwidth]{fastest.png}
+	\caption{最短时间-规划}
+	\label{fastest}
+\end{figure}
+然后我们点击\textbf{模拟}按钮，会看到每条路径有相应的交通工具和用户状态的日志信息。
+
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.8\textwidth]{fastest_simulation.png}
+	\caption{最短时间-模拟}
+	\label{fastest_simulation}
+\end{figure}
+
+	\item \textbf{规定时间最少价格}\ 我们选择[哈尔滨 $\to$ 广州]途径[石家庄、郑州]，出发时间为2019-07-30，策略为规定时间最少价格。点击\textbf{规划}按钮，结果如图~\ref{cheapest_in_time_plan}~。
+	
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.8\textwidth]{cheapest_in_time_plan.png}
+	\caption{规定时间最少价格-规划}
+	\label{cheapest_in_time_plan}
+\end{figure}
+
+然后我们点击\textbf{模拟}按钮，会看到如图~\ref{cheapest_in_time_simulation}~所示每条路径有相应的交通工具和用户状态的日志信息。
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=.8\textwidth]{cheapest_in_time_simulation.png}
+	\caption{规定时间最少价格-模拟}
+	\label{cheapest_in_time_simulation}
+\end{figure}
+\end{enumerate}
 
 \section{错误处理}
 当用户输入错误的数据时，会弹出相应的信息提示出错，详见图形界面部分。
+
 \begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=1\textwidth]{exception.png}
+	\includegraphics[width=.8\textwidth]{exception.png}
 	\caption{出错信息}
 	\label{error}
 \end{figure}
@@ -435,6 +489,10 @@ def get_flight_prices(site_info, time_info):
 	\item \textbf{无用户登录功能}\ 考虑到开发的方便，我们并未实现用户登录的功能。目前仍是直接打开程序即可直接使用。
 \end{enumerate}
 
+\section{心得与结语}
+通过小组合作，在拿到问题之后，分析问题、解决问题，最后汇总，期间虽然遇到很多困难，但是我们依然给出了解决此旅行问题的一种方案。
+利用自己爬取的数据，通过模拟退火和预处理结合的方式，我们基本可以给出用户旅行需求的最优解，通过图形界面直观又美观的展示了我们的结果，也方便用户和我们的交互，通过界面日志信息和文件日志信息来展示和保存用户状态信息，便于了解用户实时动态。
+在本次实践中感悟到，在遇到问题时，要积极寻找解决方案，组员间要多沟通协商，时间安排等要充分合理。
 \appendix
 \chapter{数据结构定义}
 
@@ -649,6 +707,26 @@ private:
 	QTimer m_simulateTimer;
 	QVector<int> m_citySequence;
 	QVector<QString> m_tranName;
+};
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++,caption={TransController 的定义},captionpos=b]
+class TransController: public QObject {
+  	Q_OBJECT
+  	Q_PROPERTY(QGeoCoordinate position READ position WRITE 	setPosition NOTIFY positionChanged)
+
+public:
+	TransController();
+	~TransController();
+	void setPosition(const QGeoCoordinate &c);
+	QGeoCoordinate position() const;
+
+signals:
+	void positionChanged();
+
+private:
+	QGeoCoordinate currentPosition;
+	QEasingCurve easingCurve;
 };
 \end{lstlisting}
 

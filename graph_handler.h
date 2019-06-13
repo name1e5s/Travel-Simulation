@@ -26,6 +26,7 @@ class GraphHandler : public QObject {
   Q_PROPERTY(QVector<int> timeAndTrans READ timeAndTrans WRITE setTimeAndTrans)
 public:
   explicit GraphHandler(QObject *parent = nullptr);
+
   Q_INVOKABLE void generateResult();
 
   Q_INVOKABLE void appendMiddleCity(int value);

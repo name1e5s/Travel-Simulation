@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>旅行模拟器</Name>
+    <Version>1.0.0</Version>
+    <Title>旅行模拟器</Title>
+    <Publisher>DS Course Project Group</Publisher>
+    <!-- Directory name is used in component.xml -->
+    <StartMenuDir>旅行模拟器</StartMenuDir>
+    <TargetDir>@HomeDir@/Travel-Simulator</TargetDir>
+</Installer>
